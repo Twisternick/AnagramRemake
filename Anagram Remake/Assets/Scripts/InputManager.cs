@@ -5,119 +5,181 @@ using UnityEngine.UI;
 using System.IO;
 using TMPro;
 using System.Linq;
+using UnityEngine.EventSystems;
+using System;
+using System.Threading;
 
 public class InputManager : MonoBehaviour
 {
-    [SerializeField] private TMP_InputField input;
+    [SerializeField] private List<TMP_Text> letterBank;
     [SerializeField] private List<TMP_Text> showTexts;
     [SerializeField] private List<string> words = new List<string>();
     [SerializeField] private List<char> vowels, consonants;
-    [SerializeField] private List<char> letterStack;
-    [SerializeField] private List<TMP_Text> letterBank;
 
-    private string lastText;
+    [SerializeField] private List<Letter> letters;
+    [SerializeField] private List<Placeholders> placeholders;
+
+    [SerializeField] private StandaloneInputModule inputModule;
+
+    private int letterStackIndex;
+    private int plhoin;
+    public int placeHolderIndex
+    {
+        get { return plhoin; }
+        set
+        {
+            plhoin = Mathf.Clamp(value, 0, 8);
+            
+        }
+    }
+
+    private Coroutine backSpaceCoroutine;
     // Start is called before the first frame update
     void Start()
     {
-        input.Select();
-
-        ClearShownList();
         ClearLetterBank();
         GetWordList();
+        //ShowLetterBank();
+    }
+
+
+    public void GetInputString()
+    {
+        foreach(char c in Input.inputString)
+        {
+            int index = letters.FindIndex(x => x.letter == c.ToString() && x.used == false);
+            if (index != -1)
+            {
+                // Add Letter to be shown
+                placeholders[placeHolderIndex].letterIndex = index;
+                letters[index].used = true;
+                letters[index].MoveToPosition(placeholders[placeHolderIndex].transform.position + new Vector3(0f, 55f, 0f));
+                placeHolderIndex++;
+            }
+        }
     }
 
     // Update is called once per frame
     void Update()
     {
+        
         if (Input.GetKeyDown(KeyCode.Return))
         {
             ValidateWord();
         }
-        if (Input.GetKeyUp(KeyCode.Return))
+        else if (Input.GetKeyDown(KeyCode.Backspace))
         {
-            input.ActivateInputField();
-        }
-        if (Input.GetKeyDown(KeyCode.Backspace))
-        {
-            if (lastText.Length > 0)
+            Backspace();
+            if (placeHolderIndex >= 0)
             {
-                letterStack.Add(lastText[lastText.Length - 1]);
-                ShowLetterBank();
+                if (backSpaceCoroutine != null)
+                {
+                    StopCoroutine(backSpaceCoroutine);
+                }
+                backSpaceCoroutine = StartCoroutine(CheckHold());
+                
             }
         }
-        lastText = input.text;
+        else
+        {
+            GetInputString();
+        }
+        //lastText = input.text;
+    }
+
+    public void Backspace()
+    {
+        if (placeHolderIndex >= 0)
+        {
+            if (placeholders[placeHolderIndex].letterIndex > -1)
+            {
+                letters[placeholders[placeHolderIndex].letterIndex].used = false;
+                letters[placeholders[placeHolderIndex].letterIndex].ResetPosition();
+            }
+            placeholders[placeHolderIndex].letterIndex = -1;
+            placeHolderIndex--;    
+        }
+    }
+
+
+    public IEnumerator CheckHold()
+    {
+        yield return new WaitForSeconds(inputModule.repeatDelay);
+        while (Input.GetKey(KeyCode.Backspace))
+        {
+            Backspace();
+            yield return new WaitForSeconds((1/inputModule.inputActionsPerSecond));
+            
+        }
+    }
+
+    public void ServerRandomLetters()
+    {
+        for (int i = 0; i < 9; i ++)
+        {
+            RandomizeLetters(Convert.ToBoolean(UnityEngine.Random.Range(0, 2)));
+        }
     }
 
     public void RandomizeLetters(bool isVowel)
     {
-        if (letterStack.Count < 9)
+        if (letterStackIndex < 9)
         {
             if (isVowel)
             {
-                int ran = Random.Range(0, vowels.Count);
-                letterStack.Add(vowels[ran]);
+                int ran = UnityEngine.Random.Range(0, vowels.Count);
+                letters[letterStackIndex].letter = vowels[ran].ToString();
             }
             else
             {
                 // Consonants
-                int ran = Random.Range(0, consonants.Count);
-                letterStack.Add(consonants[ran]);
+                int ran = UnityEngine.Random.Range(0, consonants.Count);
+                letters[letterStackIndex].letter = consonants[ran].ToString();
             }
+            letterStackIndex++;
         }
-        ShowLetterBank();
+        if (letterStackIndex == 9)
+        {
+            // Set Two Letters values to be x2 and x3
+            int silver = UnityEngine.Random.Range(0, letters.Count);
+            int gold = UnityEngine.Random.Range(0, letters.Count);
+            while (gold == silver)
+            {
+                gold = UnityEngine.Random.Range(0, letters.Count);
+            }
+
+            letters[silver].value = 2;
+            letters[gold].value = 3;
+        }
     }
     public void ClearLetterBank()
     {
-        foreach(var letter in letterBank)
+        foreach(var letter in letters)
         {
-            letter.text = "";
+            letter.display.text = "";
         }
     }
 
-    public void ShowLetterBank()
+    public void ShuffleLetterBank()
     {
-        ClearLetterBank();
-        for(int i = 0; i < letterStack.Count; i++)
-        {
-            letterBank[i].text = letterStack[i].ToString();
-        }
+        // Rearrange parent order?
+        letters.Shuffle();
     }
 
-
-    public void ClearShownList()
-    {
-        foreach(var text in showTexts)
-        {
-            text.text = "";
-        }
-    }
-
-    public void UpdateShownList()
-    {
-        ClearShownList();
-        if (input.text.Length == 0)
-        {
-            return;
-        }
-        if (letterStack.Contains(input.text[input.text.Length - 1]))
-        {
-            letterStack.Remove(input.text[input.text.Length-1]);
-            ShowLetterBank();
-        }
-        else if (input.text.Length != lastText.Length && !Input.GetKeyDown(KeyCode.Backspace))
-        {
-            input.text = input.text.Remove(input.text.Length-1);
-        }
-        for (int i = 0; i < input.text.Length; i++)
-        {
-            showTexts[i].text = input.text[i].ToString();
-        }
-    }
 
     public void ValidateWord()
     {
-        print(words.IndexOf(input.text.ToUpper()));
-        if (words.IndexOf(input.text.ToUpper()) != -1)
+        //print(words.IndexOf(holdingText.ToUpper()));
+        string test = "";
+        foreach (Placeholders p in placeholders)
+        {
+            if (p.letterIndex >= 0)
+            {
+                test += letters[p.letterIndex].letter;
+            }
+        }
+        
+        if (words.IndexOf(test.ToUpper()) != -1)
         {
             // Valid word
             print("Valid Word");
@@ -126,17 +188,23 @@ public class InputManager : MonoBehaviour
         {
             print("Invaild Word");
         }
-        input.Select();
     }
 
     public void GetWordList()
     {
-        words = new List<string>(File.ReadAllLines(@"C:\Users\NickV\Desktop\wordlist.txt"));
+        if (File.Exists(Application.persistentDataPath + "/wordlist.txt"))
+        {
+            words = new List<string>(File.ReadAllLines(Application.persistentDataPath + "/wordlist.txt"));
+        }
+        else
+        {
+            SaveWordList();
+        }
     }
 
     public void SaveWordList()
     {
-        string[] lines = File.ReadAllLines(@"C:\Users\NickV\Desktop\pg29765.txt");
+        string[] lines = File.ReadAllLines(@"C:\Users\annic\Desktop\pg29765.txt");
         foreach (string line in lines)
         {
             if (line.Length <= 9 && !string.IsNullOrEmpty(line))
@@ -150,7 +218,7 @@ public class InputManager : MonoBehaviour
                 }
             }
         }
-        File.WriteAllLines(@"C:\Users\NickV\Desktop\wordlist.txt", words.ToArray());
+        File.WriteAllLines(Application.persistentDataPath + "/wordlist.txt", words.ToArray());
     }
 
     public bool IsAllUpper(string input)
@@ -161,5 +229,30 @@ public class InputManager : MonoBehaviour
                 return false;
         }
         return true;
+    }
+}
+public static class ThreadSafeRandom
+{
+    [ThreadStatic] private static System.Random Local;
+
+    public static System.Random ThisThreadsRandom
+    {
+        get { return Local ?? (Local = new System.Random(unchecked(Environment.TickCount * 31 + Thread.CurrentThread.ManagedThreadId))); }
+    }
+}
+
+static class MyExtensions
+{
+    public static void Shuffle<T>(this IList<T> list)
+    {
+        int n = list.Count;
+        while (n > 1)
+        {
+            n--;
+            int k = ThreadSafeRandom.ThisThreadsRandom.Next(n + 1);
+            T value = list[k];
+            list[k] = list[n];
+            list[n] = value;
+        }
     }
 }
