@@ -1,4 +1,8 @@
 sceneSetups:
+- path: Assets/Scenes/AnagramServer.unity
+  isLoaded: 1
+  isActive: 0
+  isSubScene: 0
 - path: Assets/Scenes/Anagram.unity
   isLoaded: 1
   isActive: 1

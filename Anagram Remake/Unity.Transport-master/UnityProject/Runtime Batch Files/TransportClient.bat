@@ -1,0 +1,1 @@
+start UnityProject.exe -screen-fullscreen 0 -screen-height 512 -screen-width 512 -serverAddress 127.0.0.1 -serverPort 16448

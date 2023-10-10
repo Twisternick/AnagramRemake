@@ -19,6 +19,7 @@ public class Letter : MonoBehaviour
         }
         set
         {
+            gameObject.name = value;
             l = value;
             display.text = l;
         }
@@ -58,41 +59,56 @@ public class Letter : MonoBehaviour
     public Vector2 startingPosition;
 
     private Vector3 velocity = Vector3.zero;
+    [SerializeField] private RectTransform rect;
 
     private Coroutine moveTo;
 
     private void Start()
     {
-        startingPosition = transform.position;
+        startingPosition = rect.anchoredPosition;
         value = 1;
     }
 
 
     public void ResetPosition()
     {
-        MoveToPosition(startingPosition);
+        MoveToPosition(startingPosition, true);
     }
 
-    public void MoveToPosition(Vector3 position)
+    public void MoveToPosition(Vector3 position, bool useAnchored = false)
     {
         if (moveTo != null)
         {
             StopCoroutine(moveTo);
         }
-        moveTo = StartCoroutine(LerpToPosition(position));
+        moveTo = StartCoroutine(LerpToPosition(position, useAnchored));
     }
 
-    private IEnumerator LerpToPosition(Vector3 position)
+    private IEnumerator LerpToPosition(Vector3 position, bool useAnchored = false)
     {
         float duration = 0.25f;
         float time = 0;
-        Vector3 startPosition = transform.position;
-        while (time < duration)
+        if (useAnchored)
         {
-            transform.position = Vector3.Lerp(startPosition, position, time / duration);
-            time += Time.deltaTime;
-            yield return null;
+            Vector3 startPosition = rect.anchoredPosition;
+            while (time < duration)
+            {
+                rect.anchoredPosition = Vector3.Lerp(startPosition, position, time / duration);
+                time += Time.deltaTime;
+                yield return null;
+            }
+            rect.anchoredPosition = position;
         }
-        transform.position = position;
+        else
+        {
+            Vector3 startPosition = transform.position;
+            while (time < duration)
+            {
+                transform.position = Vector3.Lerp(startPosition, position, time / duration);
+                time += Time.deltaTime;
+                yield return null;
+            }
+            transform.position = position;
+        }
     }
 }

@@ -1,0 +1,46 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+
+using UnityEngine;
+using Unity.Networking.Transport;
+
+using tehelee.networking;
+
+namespace #FOLDERSPACE#
+{
+	public class #SCRIPTNAME# : Packet
+	{
+		////////////////////////////////
+		
+		public override ushort id { get { return ( ushort ) PacketRegistry.#PACKETID#; } }
+		
+		public override int bytes { get { return 8; } }
+
+		////////////////////////////////
+
+		public int alpha;
+
+		public int beta;
+
+		////////////////////////////////
+
+		public #SCRIPTNAME#() : base() { }
+
+		public #SCRIPTNAME#( ref DataStreamReader reader, ref DataStreamReader.Context context ) : base( ref reader, ref context )
+		{
+			alpha = reader.ReadInt( ref context );
+
+			beta = reader.ReadInt( ref context );
+		}
+
+		public override void Write( ref DataStreamWriter writer )
+		{
+			writer.Write( alpha );
+
+			writer.Write( beta );
+		}
+
+		////////////////////////////////
+	}
+}
