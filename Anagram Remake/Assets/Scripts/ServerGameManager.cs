@@ -13,17 +13,32 @@ namespace tehelee.networking
     {
         public enum GameState
         {
-            Waiting,
+            Waiting = -1,
             RoundOneGetLetters,
             RoundOneSentLetters,
-            RoundTwo,
-            RoundThree,
-            RoundFour,
-            RoundFive,
+            RoundTwoGetLetters,
+            RoundTwoSentLetters,
+            RoundThreeGetLetters,
+            RoundThreeSentLetters,
+            RoundFourGetLetters,
+            RoundFourSentLetters,
+            RoundFiveGetLetters,
+            RoundFiveSentLetters,
             ScoreRecap
         }
 
         private GameState _gameState;
+
+        public GameState gameState
+        {
+
+            get { return _gameState; }
+            set
+            {
+                _gameState = value;
+                SetGameState();
+            }
+        }
 
         [Serializable]
         public class ServerLetter
@@ -37,7 +52,7 @@ namespace tehelee.networking
             public string name;
             public int id;
             public int score;
-            public string word;
+            public List<string> words;
         }
 
         public string currentBoardLetters;
@@ -50,6 +65,8 @@ namespace tehelee.networking
         public int twoScoreIndex, threeScoreIndex;
 
         public List<ServerLetter> serverLetters = new List<ServerLetter>();
+
+        private float roundTimer = 120f;
 
         void OnEnable()
         {
@@ -79,6 +96,8 @@ namespace tehelee.networking
             }
             currentBoardLetters = "";
             serverLetters.Clear();
+            roundTimer = 120f;
+            Server.instance.Send(new testingui.networking.packets.Round() { roundState = Round.RoundState.roundStart, counter = 0, clientToChoose = 0 });
         }
 
         public ReadResult GetClientIDFromConnection(NetworkConnection networkConnection, ref DataStreamReader dataStreamReader)
@@ -89,7 +108,11 @@ namespace tehelee.networking
             player.name = "Player " + (clients.Count + 1);
             player.id = clients.Count;
             player.score = 0;
-            player.word = "";
+            player.words = new List<string>();
+            for (int i = 0; i < 5; i++)
+            {
+                player.words.Add("");
+            }
             clients.Add(player);
 
             /*  print("GetClientIDFromConnection");
@@ -172,11 +195,11 @@ namespace tehelee.networking
             {
                 serverLetters[^1].amount = 1;
             }
-            if (serverLetters.Count == 9 && _gameState == GameState.RoundOneGetLetters)
+            if (serverLetters.Count == 9 && (int)gameState % 2 == 0)
             {
                 /*  print ("Swapping to RoundOneSentLetters"); */
                 Server.instance.Send(new testingui.networking.packets.CanPlay() { canPlay = true });
-                _gameState = GameState.RoundOneSentLetters;
+                gameState++;
             }
         }
 
@@ -199,6 +222,14 @@ namespace tehelee.networking
                                 print("Valid: " + valid);
 
                                 print("NETWORKD ID: " + id); */
+                if (valid)
+                {
+                    clients.Find(x => x.id == id).words[((int)gameState - 1) / 2] = word;
+                }
+                if (clients.TrueForAll(x => x.words[((int)gameState - 1) / 2] != ""))
+                {
+                    gameState++;
+                }
 
                 Server.instance.Send(new ValidWord() { networkId = id, isValid = valid });
             }
@@ -207,6 +238,48 @@ namespace tehelee.networking
         public ReadResult OnHeartbeat(NetworkConnection connection, ref DataStreamReader reader)
         {
             return ReadResult.Consumed;
+        }
+
+        public void SetGameState()
+        {
+            if (gameState != GameState.Waiting && gameState != GameState.ScoreRecap)
+            {
+                print((int)gameState);
+                print((int)gameState % 2);
+                if (((int)gameState) % 2 == 0)
+                {
+                    OnRoundStart();
+                }
+            }
+        }
+
+        void Update()
+        {
+            if (gameState != GameState.Waiting && gameState != GameState.ScoreRecap)
+            {
+                if ((int)gameState % 2 == 1)
+                {
+                    if (roundTimer > 0)
+                    {
+                        roundTimer -= Time.deltaTime;
+                    }
+                }
+                /* if (roundTimer <= 0)
+                {
+                    gameState++;
+                    roundTimer = 120f;
+                } */
+            }
+        }
+        void FixedUpdate()
+        {
+            if (gameState != GameState.Waiting && gameState != GameState.ScoreRecap)
+            {
+                if ((int)gameState % 2 == 1)
+                {
+                    Server.instance.Send(new testingui.networking.packets.Timer() { time = roundTimer });
+                }
+            }
         }
     }
 }

@@ -16,6 +16,7 @@ namespace tehelee.networking
         RecieveClientID,
         GetClientID,
         ShowLetterPlacement,
-        GetLetterPlacement
+        GetLetterPlacement,
+        Timer
     }
 }

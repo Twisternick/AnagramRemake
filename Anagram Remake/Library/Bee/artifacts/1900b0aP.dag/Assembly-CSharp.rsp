@@ -301,6 +301,7 @@
 -r:"C:/Program Files/Unity/Hub/Editor/2022.2.11f1/Editor/Data/PlaybackEngines/WindowsStandaloneSupport/Variations/mono/Managed/UnityEngine.XRModule.dll"
 -r:"Library/PackageCache/com.unity.collections@1.4.0/Unity.Collections.LowLevel.ILSupport/Unity.Collections.LowLevel.ILSupport.dll"
 -r:"Library/Bee/artifacts/1900b0aP.dag/Cinemachine.ref.dll"
+-r:"Library/Bee/artifacts/1900b0aP.dag/Gentleland.SteampunkUI.DemoAndExample.ref.dll"
 -r:"Library/Bee/artifacts/1900b0aP.dag/Unity.2D.Common.Runtime.ref.dll"
 -r:"Library/Bee/artifacts/1900b0aP.dag/Unity.2D.SpriteShape.Runtime.ref.dll"
 -r:"Library/Bee/artifacts/1900b0aP.dag/Unity.AI.Navigation.ref.dll"
@@ -340,6 +341,7 @@
 "Assets/Scripts/Networking/Packets/SendServerClose.cs"
 "Assets/Scripts/Networking/Packets/ServerClose.cs"
 "Assets/Scripts/Networking/Packets/ShowLetterPlacement.cs"
+"Assets/Scripts/Networking/Packets/Timer.cs"
 "Assets/Scripts/Networking/Packets/ValidWord.cs"
 "Assets/Scripts/Networking/Packets/Word.cs"
 "Assets/Scripts/Networking/Server.cs"
@@ -347,6 +349,7 @@
 "Assets/Scripts/Placeholders.cs"
 "Assets/Scripts/ServerGameManager.cs"
 "Assets/Scripts/Utils.cs"
+"Assets/UI pack/Scripts/FillValueNumber.cs"
 -langversion:9.0
 /unsafe+
 /deterministic

@@ -330,6 +330,7 @@
 -r:"Library/PackageCache/com.unity.nuget.mono-cecil@1.11.4/Mono.Cecil.dll"
 -r:"Library/Bee/artifacts/1900b0aE.dag/Cinemachine.ref.dll"
 -r:"Library/Bee/artifacts/1900b0aE.dag/com.unity.cinemachine.editor.ref.dll"
+-r:"Library/Bee/artifacts/1900b0aE.dag/Gentleland.SteampunkUI.DemoAndExample.ref.dll"
 -r:"Library/Bee/artifacts/1900b0aE.dag/PPv2URPConverters.ref.dll"
 -r:"Library/Bee/artifacts/1900b0aE.dag/Unity.2D.Common.Editor.ref.dll"
 -r:"Library/Bee/artifacts/1900b0aE.dag/Unity.2D.Common.Path.Editor.ref.dll"
@@ -395,6 +396,7 @@
 "Assets/Scripts/Networking/Packets/SendServerClose.cs"
 "Assets/Scripts/Networking/Packets/ServerClose.cs"
 "Assets/Scripts/Networking/Packets/ShowLetterPlacement.cs"
+"Assets/Scripts/Networking/Packets/Timer.cs"
 "Assets/Scripts/Networking/Packets/ValidWord.cs"
 "Assets/Scripts/Networking/Packets/Word.cs"
 "Assets/Scripts/Networking/Server.cs"
@@ -402,6 +404,7 @@
 "Assets/Scripts/Placeholders.cs"
 "Assets/Scripts/ServerGameManager.cs"
 "Assets/Scripts/Utils.cs"
+"Assets/UI pack/Scripts/FillValueNumber.cs"
 -langversion:9.0
 /unsafe+
 /deterministic

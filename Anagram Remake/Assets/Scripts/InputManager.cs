@@ -7,12 +7,13 @@ using TMPro;
 using System.Linq;
 using UnityEngine.EventSystems;
 using System;
-using System.Threading;
 using Unity.Networking.Transport;
 using Unity.Networking.Transport.Utilities;
 using UnityEngine.Networking;
 using testingui.networking.packets;
 using Unity.Netcode;
+using System.Threading;
+using tehelee.networking.packets;
 
 namespace tehelee.networking
 {
@@ -47,6 +48,8 @@ namespace tehelee.networking
 
         [SerializeField] private TextMeshProUGUI clientIDText;
 
+        [SerializeField] private Image timerImage;
+
         private int letterStackIndex;
         private int plhoin;
         public int placeHolderIndex
@@ -77,6 +80,8 @@ namespace tehelee.networking
                 Client.instance.RegisterListener(PacketRegistry.CanPlay, OnCanPlay);
                 Client.instance.RegisterListener(PacketRegistry.RecieveClientID, OnRecieveClientID);
                 Client.instance.RegisterListener(PacketRegistry.GetLetterPlacement, OnOpponentLetterPlacement);
+                Client.instance.RegisterListener(PacketRegistry.Timer, OnTimer);
+                Client.instance.RegisterListener(PacketRegistry.Heartbeat, SendHeartBeat);
             }
             );
             ClearLetterBank();
@@ -86,6 +91,13 @@ namespace tehelee.networking
         void Start()
         {
             Client.instance.Send(new testingui.networking.packets.GetClientID() { });
+        }
+
+        private ReadResult SendHeartBeat(NetworkConnection networkConnection, ref DataStreamReader reader)
+        {
+            Heartbeat heartbeat = new Heartbeat(ref reader);
+            Client.instance.Send(new Heartbeat() { });
+            return ReadResult.Processed;
         }
 
         private ReadResult OnRecieveClientID(NetworkConnection networkConnection, ref DataStreamReader reader)
@@ -140,8 +152,16 @@ namespace tehelee.networking
             if (round.roundState == Round.RoundState.roundStart)
             {
                 canPlay = true;
+                ResetBoardState();
             }
 
+            return ReadResult.Processed;
+        }
+
+        private ReadResult OnTimer(NetworkConnection networkConnection, ref DataStreamReader reader)
+        {
+            testingui.networking.packets.Timer timer = new testingui.networking.packets.Timer(ref reader);
+            timerImage.fillAmount = timer.time / 120f;
             return ReadResult.Processed;
         }
 
@@ -402,6 +422,22 @@ namespace tehelee.networking
             {
                 letter.display.text = "";
             }
+        }
+
+        public void ResetBoardState()
+        {
+            ClearLetterBank();
+            placeHolderIndex = 0;
+            foreach (var letter in letters)
+            {
+                letter.used = false;
+                letter.ResetPosition();
+            }
+            foreach (var placeholder in placeholders)
+            {
+                placeholder.letterIndex = -1;
+            }
+
         }
 
         public void ShuffleLetterBank()
