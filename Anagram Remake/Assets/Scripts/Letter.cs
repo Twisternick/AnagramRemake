@@ -42,14 +42,17 @@ public class Letter : MonoBehaviour
             {
                 case 1:
                     multiplier.text = "";
+                    background.color = defaultColor;
                     // dont display and set default color
                     break;
                 case 2:
                     multiplier.text = "x2";
+                    background.color = twoTimesColor;
                     // Change color and Set Multiplier Active and set Multiplier Text
                     break;
                 case 3:
                     multiplier.text = "x3";
+                    background.color = threeTimesColor;
                     // Change color and Set Multiplier Active and set Multiplier Text
                     break;
             }
@@ -57,6 +60,10 @@ public class Letter : MonoBehaviour
     }
 
     public Vector2 startingPosition;
+
+    [SerializeField]
+    private Color defaultColor, twoTimesColor, threeTimesColor;
+    
 
     private Vector3 velocity = Vector3.zero;
     [SerializeField] private RectTransform rect;

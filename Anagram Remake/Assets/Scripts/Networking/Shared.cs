@@ -258,8 +258,8 @@ namespace tehelee.networking
             //new Pipeline(driver);
 
 
-            driver = NetworkDriver.Create(new NetworkConfigParameter() { connectTimeoutMS = NetworkParameterConstants.ConnectTimeoutMS, disconnectTimeoutMS = 30000, maxConnectAttempts = NetworkParameterConstants.MaxConnectAttempts });
-
+            driver = NetworkDriver.Create(new NetworkConfigParameter() { connectTimeoutMS = 1000, disconnectTimeoutMS = 1000, maxConnectAttempts = 20 });
+            
             //driver = new NetworkDriver( new ReliableUtility.Parameters { WindowSize = 32 }, new NetworkConfigParameter { connectTimeoutMS = NetworkParameterConstants.ConnectTimeoutMS, disconnectTimeoutMS = 15000, maxConnectAttempts = NetworkParameterConstants.MaxConnectAttempts } );
 
 

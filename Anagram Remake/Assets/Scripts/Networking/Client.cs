@@ -76,7 +76,15 @@ namespace tehelee.networking
             connection = default(NetworkConnection);
 
             connection = driver.Connect(NetworkEndPoint.Parse(this.serverAddress ?? string.Empty, this.port, NetworkFamily.Ipv4));
-          /*   Debug.Log(connection.InternalId); */
+            reconnectAttempts = 0;
+
+            if (connection == default(NetworkConnection))
+            {
+                Debug.LogError("Client: Failed to connect to server.");
+                return;
+            }
+            Debug.Log(connection.GetState(driver));
+            /*   Debug.Log(connection.InternalId); */
 
         }
 
@@ -177,11 +185,13 @@ namespace tehelee.networking
             driver.ScheduleUpdate().Complete();
 
             NetworkConnection.State connectionState = driver.GetConnectionState(connection);
+            print(connectionState);
 
-            if (connectionState == NetworkConnection.State.Disconnected)
+            if (connectionState == NetworkConnection.State.Disconnected && reattemptFailedConnections && reconnectAttempts < 10)
             {
                 Debug.LogError("Client Disconnected");
                 connection = driver.Connect(NetworkEndPoint.Parse(this.serverAddress ?? string.Empty, this.port));
+                reconnectAttempts++;
                 return;
             }
 
@@ -195,14 +205,16 @@ namespace tehelee.networking
                 return;
 
 
-
-            if (reattemptFailedConnections && (connectionState == NetworkConnection.State.Disconnected))
+            if (reconnectAttempts < 10)
             {
-                Debug.LogFormat("Client: Connection to '{0}:{1}' failed; auto-reconnect attempt {2}.", serverAddress, port, ++reconnectAttempts);
+                if (reattemptFailedConnections && (connectionState == NetworkConnection.State.Disconnected))
+                {
+                    Debug.LogFormat("Client: Connection to '{0}:{1}' failed; auto-reconnect attempt {2}.", serverAddress, port, ++reconnectAttempts);
 
-                connection = driver.Connect(NetworkEndPoint.Parse(this.serverAddress ?? string.Empty, this.port));
+                    connection = driver.Connect(NetworkEndPoint.Parse(this.serverAddress ?? string.Empty, this.port));
 
-                return;
+                    return;
+                }
             }
 
             if (connectionState != NetworkConnection.State.Connected)

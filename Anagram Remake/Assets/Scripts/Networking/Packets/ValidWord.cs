@@ -9,7 +9,7 @@ namespace testingui.networking.packets
 
         public override ushort id { get { return (ushort)PacketRegistry.ValidWord; } }
 
-        public override int bytes { get { return sizeof(ushort) + 4 + sizeof(int); } }
+        public override int bytes { get { return sizeof(ushort) + 4 + 4 + sizeof(int); } }
 
         ////////////////////////////////
 
@@ -17,6 +17,8 @@ namespace testingui.networking.packets
         public ushort networkId;
 
         public bool isValid;
+
+        public int score;
 
         ////////////////////////////////
 
@@ -29,6 +31,7 @@ namespace testingui.networking.packets
         {
             networkId = reader.ReadUShort();
             isValid = Convert.ToBoolean(reader.ReadInt());
+            score = reader.ReadInt();
 
         }
 
@@ -36,6 +39,7 @@ namespace testingui.networking.packets
         {
             writer.WriteUShort(networkId);
             writer.WriteInt(isValid ? 1 : 0);
+            writer.WriteInt(score);
         }
 
         ////////////////////////////////

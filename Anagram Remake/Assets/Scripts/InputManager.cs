@@ -9,6 +9,7 @@ using Unity.Networking.Transport;
 using testingui.networking.packets;
 using System.Threading;
 using tehelee.networking.packets;
+using UnityEngine.AI;
 
 namespace tehelee.networking
 {
@@ -35,6 +36,7 @@ namespace tehelee.networking
         [SerializeField] private StandaloneInputModule inputModule;
 
         [SerializeField] private TextMeshProUGUI clientIDText;
+        [SerializeField] private TextMeshProUGUI scoreText;
 
         [SerializeField] private Image timerImage;
 
@@ -49,9 +51,13 @@ namespace tehelee.networking
             }
         }
 
+        private int potientalScore, score;
+
         private Coroutine backSpaceCoroutine;
 
         public bool canPlay;
+        [SerializeField]
+        private float tickUpTime;
 
 
         // Start is called before the first frame update
@@ -175,6 +181,11 @@ namespace tehelee.networking
             if (validWord.networkId == networkId)
             {
                 canPlay = !validWord.isValid;
+                if (score != validWord.score * 10)
+                {
+                    StartCoroutine(TickUpScore(score, validWord.score * 10));
+                }
+                //scoreText.text = "Score: " + score;
                 return ReadResult.Consumed;
             }
             return ReadResult.Skipped;
@@ -185,6 +196,14 @@ namespace tehelee.networking
             testingui.networking.packets.Letter letter = new testingui.networking.packets.Letter(ref reader);
             for (int i = 0; i < letter.text.Length; i++)
             {
+                if (i == letter.doubleLetterIndex)
+                {
+                    letters[i].value = 2;
+                }
+                if (i == letter.tripleLetterIndex)
+                {
+                    letters[i].value = 3;
+                }
                 letters[i].letter = letter.text[i].ToString().ToLower();
             }
 
@@ -217,6 +236,42 @@ namespace tehelee.networking
                     Client.instance.Send(new testingui.networking.packets.ShowLetterPlacement() { networkId = (ushort)networkId, textLength = placeHolderIndex });
 
                 }
+            }
+        }
+
+        public void ClickedLetter(Letter letter)
+        {
+            if (!canPlay)
+            {
+                return;
+            }
+            if (letter.used)
+            {
+                int index = letters.IndexOf(letter);
+                int placeIndex = placeholders.FindIndex(x => x.letterIndex == index);
+
+                print(placeIndex);
+                print(placeHolderIndex);
+
+                for (int i = placeIndex; i < placeHolderIndex - 1; i++)
+                {
+                    placeholders[i].letterIndex = placeholders[i + 1].letterIndex;
+                    letters[placeholders[i].letterIndex].MoveToPosition(placeholders[i].transform.position + new Vector3(0f, 55f, 0f));
+                }
+
+                placeholders[placeHolderIndex - 1].letterIndex = -1;
+                placeHolderIndex--;
+                letters[index].used = false;
+                letters[index].ResetPosition();
+            }
+            else
+            {
+                int index = letters.IndexOf(letter);
+                placeholders[placeHolderIndex].letterIndex = index;
+                letters[index].used = true;
+                letters[index].MoveToPosition(placeholders[placeHolderIndex].transform.position + new Vector3(0f, 55f, 0f));
+                placeHolderIndex++;
+                Client.instance.Send(new testingui.networking.packets.ShowLetterPlacement() { networkId = (ushort)networkId, textLength = placeHolderIndex });
             }
         }
 
@@ -304,6 +359,7 @@ namespace tehelee.networking
             foreach (var letter in letters)
             {
                 letter.display.text = "";
+
             }
         }
 
@@ -315,6 +371,7 @@ namespace tehelee.networking
             {
                 letter.used = false;
                 letter.ResetPosition();
+                letter.value = 1;
             }
             foreach (var placeholder in placeholders)
             {
@@ -329,6 +386,16 @@ namespace tehelee.networking
             {
                 return;
             }
+            /* while (placeHolderIndex > 0)
+            {
+                placeHolderIndex--;
+                if (placeholders[placeHolderIndex].letterIndex > -1)
+                {
+                    letters[placeholders[placeHolderIndex].letterIndex].used = false;
+                    letters[placeholders[placeHolderIndex].letterIndex].ResetPosition();
+                }
+                placeholders[placeHolderIndex].letterIndex = -1;
+            } */
             // Rearrange parent order?
             int n = letters.Count;
             while (n > 1)
@@ -338,14 +405,16 @@ namespace tehelee.networking
                 Letter value = letters[k];
                 Vector2 tempPosition = letters[k].startingPosition;
                 Vector2 otherPosition = letters[n].startingPosition;
-                letters[k] = letters[n];
-                letters[n] = value;
-                letters[k].startingPosition = tempPosition;
-                letters[n].startingPosition = otherPosition;
+                /* letters[k] = letters[n];
+                letters[n] = value; */
+                letters[k].startingPosition = otherPosition;
+                letters[n].startingPosition = tempPosition;
             }
+
             foreach (Letter letter in letters)
             {
-                letter.ResetPosition();
+                if (!letter.used)
+                    letter.ResetPosition();
             }
         }
 
@@ -357,17 +426,28 @@ namespace tehelee.networking
                 return;
             }
             string test = "";
+            potientalScore = 0;
             foreach (Placeholders p in placeholders)
             {
                 if (p.letterIndex >= 0)
                 {
                     test += letters[p.letterIndex].letter.ToLower();
+                    potientalScore += letters[p.letterIndex].value;
                 }
             }
-            Client.instance.Send(new testingui.networking.packets.Word() { text = test, networkId = (ushort)this.networkId });
+            Client.instance.Send(new testingui.networking.packets.Word() { text = test, networkId = (ushort)this.networkId, score = potientalScore });
         }
 
-
+        private IEnumerator TickUpScore(int oldScore, int newScore)
+        {
+            score = newScore;
+            while (oldScore < score)
+            {
+                oldScore++;
+                scoreText.text = "Score: " + oldScore;
+                yield return new WaitForSeconds(tickUpTime);
+            }
+        }
 
         public bool IsAllUpper(string input)
         {

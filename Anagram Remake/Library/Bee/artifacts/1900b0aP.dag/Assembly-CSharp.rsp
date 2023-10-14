@@ -99,7 +99,6 @@
 -define:NET_STANDARD_2_1
 -define:NETSTANDARD
 -define:NETSTANDARD2_1
--define:UNITY_SERVER
 -define:ENABLE_CUSTOM_RENDER_TEXTURE
 -define:ENABLE_DIRECTOR
 -define:ENABLE_LOCALIZATION
@@ -349,6 +348,7 @@
 "Assets/Scripts/Networking/Shared.cs"
 "Assets/Scripts/Placeholders.cs"
 "Assets/Scripts/ServerGameManager.cs"
+"Assets/Scripts/TMP_IpAddressValidator.cs"
 "Assets/Scripts/Utils.cs"
 "Assets/UI pack/Scripts/FillValueNumber.cs"
 -langversion:9.0

@@ -15,7 +15,7 @@ namespace testingui.networking.packets
             get
             {
                 int _bytes = 0;
-                _bytes += 4 + 4 + (string.IsNullOrEmpty(text) ? 0 : text.Length * 2); // type
+                _bytes += 4 + 4 + sizeof(int) + sizeof(int) + (string.IsNullOrEmpty(text) ? 0 : text.Length * 2); // type
                 return _bytes;
             }
         }
@@ -23,6 +23,8 @@ namespace testingui.networking.packets
         ////////////////////////////////
         
         public int networkId;
+
+        public int doubleLetterIndex, tripleLetterIndex;
 
         public string text;
 
@@ -32,6 +34,8 @@ namespace testingui.networking.packets
         public Letter(ref DataStreamReader reader) : base(ref reader)
         {
             networkId = reader.ReadInt();
+            doubleLetterIndex = reader.ReadInt();
+            tripleLetterIndex = reader.ReadInt();
             int _typeLength = reader.ReadInt();
             if (_typeLength > 0)
             {
@@ -49,6 +53,8 @@ namespace testingui.networking.packets
         public override void Write(ref DataStreamWriter writer)
         {
             writer.WriteInt(networkId);
+            writer.WriteInt(doubleLetterIndex);
+            writer.WriteInt(tripleLetterIndex);
             if (string.IsNullOrEmpty(text))
             {
                 writer.WriteInt(0);
