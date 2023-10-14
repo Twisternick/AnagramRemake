@@ -4,6 +4,8 @@ using Unity.Networking.Transport;
 //using Newtonsoft.Json.Linq;
 using tehelee.networking.packets;
 using System.Collections;
+using Unity.Profiling;
+
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -207,6 +209,11 @@ namespace tehelee.networking
                 return;
 
             SendQueue();
+        }
+
+        public void SetIPAddress(string ip)
+        {
+            serverAddress = ip;
         }
 
         private void OnDestroy()

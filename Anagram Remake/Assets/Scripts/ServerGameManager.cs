@@ -1,6 +1,8 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using tehelee.networking.packets;
 using testingui.networking.packets;
 using Unity.Networking.Transport;
@@ -68,6 +70,10 @@ namespace tehelee.networking
 
         private float roundTimer = 120f;
 
+        private List<string> anagrams = new List<string>();
+
+        private List<string> words = new List<string>();
+
         void OnEnable()
         {
             Server.AddStartupListener(() =>
@@ -80,6 +86,7 @@ namespace tehelee.networking
             });
             InvokeRepeating("SendHeartBeat", 2f, 2f);
             _gameState = GameState.RoundOneGetLetters;
+            GetAnagramList();
         }
 
         public void SendHeartBeat()
@@ -97,7 +104,11 @@ namespace tehelee.networking
             currentBoardLetters = "";
             serverLetters.Clear();
             roundTimer = 120f;
-            Server.instance.Send(new testingui.networking.packets.Round() { roundState = Round.RoundState.roundStart, counter = 0, clientToChoose = 0 });
+            Server.instance.Send(new testingui.networking.packets.Round() { roundState = Round.RoundState.roundStart, counter = (int)gameState / 2, clientToChoose = 0 });
+            if (gameState == GameState.RoundFiveGetLetters)
+            {
+                GetNineLetterAnagram();
+            }
         }
 
         public ReadResult GetClientIDFromConnection(NetworkConnection networkConnection, ref DataStreamReader dataStreamReader)
@@ -139,14 +150,14 @@ namespace tehelee.networking
         {
             Word word = new Word(ref dataStreamReader);
 
-            StartCoroutine(GetWordFromDictionary(word.text, word.networkId));
+            //StartCoroutine(GetWordFromDictionary(word.text, word.networkId));
+            CheckWordFromDictionary(word.text, word.networkId);
 
             return ReadResult.Consumed;
         }
 
         public ReadResult GetLetterChoice(NetworkConnection networkConnection, ref DataStreamReader dataStreamReader)
         {
-            /* print("GetLetterChoice"); */
             GetLetter getLetter = new GetLetter(ref dataStreamReader);
 
             GetServerLetter(getLetter.letterChoice);
@@ -197,7 +208,6 @@ namespace tehelee.networking
             }
             if (serverLetters.Count == 9 && (int)gameState % 2 == 0)
             {
-                /*  print ("Swapping to RoundOneSentLetters"); */
                 Server.instance.Send(new testingui.networking.packets.CanPlay() { canPlay = true });
                 gameState++;
             }
@@ -226,14 +236,31 @@ namespace tehelee.networking
                 {
                     clients.Find(x => x.id == id).words[((int)gameState - 1) / 2] = word;
                 }
+                Server.instance.Send(new ValidWord() { networkId = id, isValid = valid });
                 if (clients.TrueForAll(x => x.words[((int)gameState - 1) / 2] != ""))
                 {
                     gameState++;
                 }
 
-                Server.instance.Send(new ValidWord() { networkId = id, isValid = valid });
+
             }
         }
+
+        public void CheckWordFromDictionary(string word, ushort id)
+        {
+            bool valid = words.Find(x => x == word.ToLower()) != null;
+
+            if (valid)
+            {
+                clients.Find(x => x.id == id).words[((int)gameState - 1) / 2] = word;
+            }
+            Server.instance.Send(new ValidWord() { networkId = id, isValid = valid });
+            if (clients.TrueForAll(x => x.words[((int)gameState - 1) / 2] != ""))
+            {
+                gameState++;
+            }
+        }
+
 
         public ReadResult OnHeartbeat(NetworkConnection connection, ref DataStreamReader reader)
         {
@@ -244,8 +271,6 @@ namespace tehelee.networking
         {
             if (gameState != GameState.Waiting && gameState != GameState.ScoreRecap)
             {
-                print((int)gameState);
-                print((int)gameState % 2);
                 if (((int)gameState) % 2 == 0)
                 {
                     OnRoundStart();
@@ -280,6 +305,40 @@ namespace tehelee.networking
                     Server.instance.Send(new testingui.networking.packets.Timer() { time = roundTimer });
                 }
             }
+        }
+
+        public void GetAnagramList()
+        {
+            print(Application.persistentDataPath);
+            if (File.Exists(Application.persistentDataPath + "/anagramlist.txt"))
+            {
+                anagrams = new List<string>(File.ReadAllLines(Application.persistentDataPath + "/anagramlist.txt"));
+            }
+            if (File.Exists(Application.persistentDataPath + "/english.txt"))
+            {
+                words = new List<string>(File.ReadAllLines(Application.persistentDataPath + "/english.txt"));
+            }
+        }
+
+        public void GetNineLetterAnagram()
+        {
+            Server.instance.Send(new testingui.networking.packets.CanPlay() { canPlay = true });
+
+            int r = UnityEngine.Random.Range(0, anagrams.Count);
+
+            List<char> anagram = anagrams[r].ToList();
+            print(anagrams[r]);
+            anagram.Shuffle();
+            for (int i = 0; i < 9; i++)
+            {
+                ServerLetter serverLetter = new ServerLetter();
+                serverLetter.letter = anagram[i].ToString().ToLower();
+                serverLetters.Add(serverLetter);
+                currentBoardLetters += serverLetter.letter;
+            }
+            Server.instance.Send(new testingui.networking.packets.Letter() { networkId = 0, text = currentBoardLetters });
+
+            gameState++;
         }
     }
 }

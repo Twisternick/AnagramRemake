@@ -101,6 +101,7 @@
 -define:NETSTANDARD
 -define:NETSTANDARD2_1
 -define:ENABLE_PROFILER
+-define:UNITY_SERVER
 -define:DEBUG
 -define:TRACE
 -define:UNITY_ASSERTIONS
@@ -403,6 +404,7 @@
 "Assets/Scripts/Networking/Shared.cs"
 "Assets/Scripts/Placeholders.cs"
 "Assets/Scripts/ServerGameManager.cs"
+"Assets/Scripts/TMP_IpAddressValidator.cs"
 "Assets/Scripts/Utils.cs"
 "Assets/UI pack/Scripts/FillValueNumber.cs"
 -langversion:9.0
