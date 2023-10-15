@@ -1,11 +1,16 @@
 ScriptsOnlyBuild:
   usedScripts:
     Assembly-CSharp.dll:
+    - EndScreen
     - Letter
     - Placeholders
+    - Spin
     - TMPro.TMP_IpAddressValidator
     - tehelee.networking.Client
     - tehelee.networking.InputManager
+    Coffee.UIParticle.dll:
+    - Coffee.UIExtensions.UIParticle
+    - Coffee.UIExtensions.UIParticleRenderer
     Unity.RenderPipelines.Core.Runtime:
     - UnityEngine.Rendering.UI.DebugUIHandlerBitField
     - UnityEngine.Rendering.UI.DebugUIHandlerButton
@@ -88,9 +93,11 @@ ScriptsOnlyBuild:
     - UnityEngine.UI.HorizontalLayoutGroup
     - UnityEngine.UI.Image
     - UnityEngine.UI.LayoutElement
+    - UnityEngine.UI.Mask
     - UnityEngine.UI.Outline
     - UnityEngine.UI.RectMask2D
     - UnityEngine.UI.Shadow
+    - UnityEngine.UI.VerticalLayoutGroup
   serializedClasses:
     Unity.RenderPipelines.Core.Runtime:
     - UnityEngine.Rendering.UI.DebugUIPrefabBundle
@@ -144,6 +151,9 @@ ScriptsOnlyBuild:
     methodName: LetServerChoose
   - assembly: Assembly-CSharp
     fullTypeName: tehelee.networking.InputManager
+    methodName: ClickedLetter
+  - assembly: Assembly-CSharp
+    fullTypeName: tehelee.networking.InputManager
     methodName: GetConsonant
   - assembly: Assembly-CSharp
     fullTypeName: tehelee.networking.InputManager
@@ -152,8 +162,38 @@ ScriptsOnlyBuild:
     fullTypeName: tehelee.networking.Client
     methodName: Open
   - assembly: Assembly-CSharp
+    fullTypeName: tehelee.networking.InputManager
+    methodName: ClickedLetter
+  - assembly: Assembly-CSharp
+    fullTypeName: tehelee.networking.InputManager
+    methodName: ClickedLetter
+  - assembly: Assembly-CSharp
+    fullTypeName: tehelee.networking.InputManager
+    methodName: ClickedLetter
+  - assembly: Assembly-CSharp
+    fullTypeName: tehelee.networking.Client
+    methodName: Open
+  - assembly: Assembly-CSharp
     fullTypeName: tehelee.networking.Client
     methodName: SetIPAddress
+  - assembly: Assembly-CSharp
+    fullTypeName: tehelee.networking.InputManager
+    methodName: ClickedLetter
+  - assembly: Assembly-CSharp
+    fullTypeName: tehelee.networking.InputManager
+    methodName: ClickedLetter
+  - assembly: Assembly-CSharp
+    fullTypeName: tehelee.networking.InputManager
+    methodName: PlayAgain
+  - assembly: Assembly-CSharp
+    fullTypeName: tehelee.networking.InputManager
+    methodName: ClickedLetter
+  - assembly: Assembly-CSharp
+    fullTypeName: tehelee.networking.InputManager
+    methodName: ClickedLetter
+  - assembly: Assembly-CSharp
+    fullTypeName: tehelee.networking.InputManager
+    methodName: ClickedLetter
   - assembly: UnityEngine.CoreModule
     fullTypeName: UnityEngine.GameObject
     methodName: SetActive
@@ -163,6 +203,9 @@ ScriptsOnlyBuild:
   - assembly: Assembly-CSharp
     fullTypeName: tehelee.networking.InputManager
     methodName: ShuffleLetterBank
+  - assembly: Assembly-CSharp
+    fullTypeName: tehelee.networking.InputManager
+    methodName: PlayAgain
   - assembly: Unity.RenderPipelines.Core.Runtime
     fullTypeName: UnityEngine.Rendering.UI.DebugUIHandlerPanel
     methodName: OnScrollbarClicked
@@ -214,6 +257,8 @@ ScriptsOnlyBuild:
       Script: {instanceID: 0}
     - Class: 28
       Script: {instanceID: 0}
+    - Class: 43
+      Script: {instanceID: 0}
     - Class: 48
       Script: {instanceID: 0}
     - Class: 49
@@ -223,131 +268,137 @@ ScriptsOnlyBuild:
     - Class: 104
       Script: {instanceID: 0}
     - Class: 114
-      Script: {instanceID: 1776}
-    - Class: 114
       Script: {instanceID: 1778}
     - Class: 114
       Script: {instanceID: 1780}
     - Class: 114
       Script: {instanceID: 1782}
     - Class: 114
-      Script: {instanceID: 1786}
+      Script: {instanceID: 1784}
     - Class: 114
       Script: {instanceID: 1788}
     - Class: 114
-      Script: {instanceID: 1796}
+      Script: {instanceID: 1790}
     - Class: 114
-      Script: {instanceID: 2008}
+      Script: {instanceID: 1798}
     - Class: 114
-      Script: {instanceID: 2132}
+      Script: {instanceID: 2010}
     - Class: 114
-      Script: {instanceID: 2520}
+      Script: {instanceID: 2136}
     - Class: 114
-      Script: {instanceID: 2602}
+      Script: {instanceID: 2524}
     - Class: 114
-      Script: {instanceID: 2644}
+      Script: {instanceID: 2608}
     - Class: 114
-      Script: {instanceID: 2734}
+      Script: {instanceID: 2650}
     - Class: 114
-      Script: {instanceID: 2850}
+      Script: {instanceID: 2740}
     - Class: 114
-      Script: {instanceID: 2980}
+      Script: {instanceID: 2856}
     - Class: 114
-      Script: {instanceID: 3274}
+      Script: {instanceID: 2986}
     - Class: 114
-      Script: {instanceID: 3414}
+      Script: {instanceID: 3280}
     - Class: 114
-      Script: {instanceID: 3434}
+      Script: {instanceID: 3420}
     - Class: 114
-      Script: {instanceID: 3538}
+      Script: {instanceID: 3440}
     - Class: 114
-      Script: {instanceID: 4154}
+      Script: {instanceID: 3544}
     - Class: 114
-      Script: {instanceID: 4258}
+      Script: {instanceID: 4160}
     - Class: 114
-      Script: {instanceID: 4460}
+      Script: {instanceID: 4264}
     - Class: 114
-      Script: {instanceID: 4516}
+      Script: {instanceID: 4466}
     - Class: 114
-      Script: {instanceID: 4606}
+      Script: {instanceID: 4522}
     - Class: 114
-      Script: {instanceID: 5046}
+      Script: {instanceID: 4612}
     - Class: 114
-      Script: {instanceID: 5198}
+      Script: {instanceID: 5052}
     - Class: 114
-      Script: {instanceID: 5394}
+      Script: {instanceID: 5204}
     - Class: 114
-      Script: {instanceID: 5418}
+      Script: {instanceID: 5402}
     - Class: 114
-      Script: {instanceID: 5666}
+      Script: {instanceID: 5428}
+    - Class: 114
+      Script: {instanceID: 5678}
     - Class: 114
       Script: {instanceID: 5810}
     - Class: 114
-      Script: {instanceID: 6322}
+      Script: {instanceID: 5824}
     - Class: 114
-      Script: {instanceID: 6576}
+      Script: {instanceID: 5974}
     - Class: 114
-      Script: {instanceID: 6598}
+      Script: {instanceID: 6340}
     - Class: 114
-      Script: {instanceID: 6676}
+      Script: {instanceID: 6594}
     - Class: 114
-      Script: {instanceID: 6782}
+      Script: {instanceID: 6616}
     - Class: 114
-      Script: {instanceID: 6820}
+      Script: {instanceID: 6694}
     - Class: 114
-      Script: {instanceID: 6884}
+      Script: {instanceID: 6800}
+    - Class: 114
+      Script: {instanceID: 6838}
     - Class: 114
       Script: {instanceID: 6902}
     - Class: 114
-      Script: {instanceID: 7170}
+      Script: {instanceID: 6920}
     - Class: 114
-      Script: {instanceID: 7172}
+      Script: {instanceID: 7190}
     - Class: 114
-      Script: {instanceID: 7200}
+      Script: {instanceID: 7192}
     - Class: 114
-      Script: {instanceID: 7562}
+      Script: {instanceID: 7220}
     - Class: 114
-      Script: {instanceID: 7910}
+      Script: {instanceID: 7582}
     - Class: 114
-      Script: {instanceID: 7920}
+      Script: {instanceID: 7930}
     - Class: 114
-      Script: {instanceID: 8014}
+      Script: {instanceID: 7940}
     - Class: 114
-      Script: {instanceID: 8022}
+      Script: {instanceID: 8034}
     - Class: 114
-      Script: {instanceID: 8176}
+      Script: {instanceID: 8042}
     - Class: 114
-      Script: {instanceID: 8228}
+      Script: {instanceID: 8196}
     - Class: 114
-      Script: {instanceID: 8288}
+      Script: {instanceID: 8248}
     - Class: 114
-      Script: {instanceID: 8378}
+      Script: {instanceID: 8308}
     - Class: 114
-      Script: {instanceID: 8394}
+      Script: {instanceID: 8398}
     - Class: 114
-      Script: {instanceID: 8552}
+      Script: {instanceID: 8414}
     - Class: 114
-      Script: {instanceID: 8734}
+      Script: {instanceID: 8572}
     - Class: 114
-      Script: {instanceID: 8864}
+      Script: {instanceID: 8754}
     - Class: 114
-      Script: {instanceID: 8890}
+      Script: {instanceID: 8884}
     - Class: 114
-      Script: {instanceID: 8956}
+      Script: {instanceID: 8910}
     - Class: 114
-      Script: {instanceID: 8984}
+      Script: {instanceID: 8976}
     - Class: 114
-      Script: {instanceID: 9354}
+      Script: {instanceID: 9004}
     - Class: 114
-      Script: {instanceID: 9966}
+      Script: {instanceID: 9378}
     - Class: 114
-      Script: {instanceID: 10246}
+      Script: {instanceID: 9920}
     - Class: 114
-      Script: {instanceID: 10700}
+      Script: {instanceID: 9994}
     - Class: 114
-      Script: {instanceID: 10968}
+      Script: {instanceID: 10274}
     - Class: 114
-      Script: {instanceID: 29488}
+      Script: {instanceID: 10648}
+    - Class: 114
+      Script: {instanceID: 10730}
+    - Class: 114
+      Script: {instanceID: 10998}
     - Class: 115
       Script: {instanceID: 0}
     - Class: 128
@@ -355,6 +406,10 @@ ScriptsOnlyBuild:
     - Class: 157
       Script: {instanceID: 0}
     - Class: 196
+      Script: {instanceID: 0}
+    - Class: 198
+      Script: {instanceID: 0}
+    - Class: 199
       Script: {instanceID: 0}
     - Class: 213
       Script: {instanceID: 0}
@@ -469,6 +524,12 @@ ScriptsOnlyBuild:
     className: ClockSlider
   - hash:
       serializedVersion: 2
+      Hash: 34fa63a30926bcf55d7323dae76be890
+    assemblyName: Coffee.UIParticle
+    namespaceName: Coffee.UIExtensions
+    className: UIParticleRenderer
+  - hash:
+      serializedVersion: 2
       Hash: 92c338a19da8c1d2d1ac886be571df4c
     assemblyName: Cinemachine
     namespaceName: Cinemachine
@@ -553,7 +614,7 @@ ScriptsOnlyBuild:
     className: VFXUIDropdownBinder
   - hash:
       serializedVersion: 2
-      Hash: bf7153c971b103c558435b531f735b59
+      Hash: 4e2b7d5f95871e8ff418e66d96f57f6f
     assemblyName: Assembly-CSharp
     namespaceName: 
     className: Letter
@@ -691,7 +752,7 @@ ScriptsOnlyBuild:
     className: Shared
   - hash:
       serializedVersion: 2
-      Hash: b813951726a0275ee8b6a46dd55f0329
+      Hash: 1323d114bf25352384d077efa67ea9f6
     assemblyName: Assembly-CSharp
     namespaceName: tehelee.networking
     className: InputManager
@@ -1141,6 +1202,12 @@ ScriptsOnlyBuild:
     className: NetworkObject
   - hash:
       serializedVersion: 2
+      Hash: 106c0064ff2dce0c2581427d3bae901b
+    assemblyName: Assembly-CSharp
+    namespaceName: 
+    className: EndScreen
+  - hash:
+      serializedVersion: 2
       Hash: fcc569162a8d9bd9df34e8c9dee84212
     assemblyName: Unity.TextMeshPro
     namespaceName: TMPro
@@ -1157,6 +1224,18 @@ ScriptsOnlyBuild:
     assemblyName: Cinemachine
     namespaceName: Cinemachine
     className: CinemachinePOV
+  - hash:
+      serializedVersion: 2
+      Hash: 751e5bae2a317288c2ab58d66687092b
+    assemblyName: Assembly-CSharp
+    namespaceName: TMPro
+    className: TMP_IpAddressValidator
+  - hash:
+      serializedVersion: 2
+      Hash: b226d18b434c7eb7424d44ec394d002e
+    assemblyName: Coffee.UIParticle
+    namespaceName: Coffee.UIExtensions
+    className: UIParticleAttractor
   - hash:
       serializedVersion: 2
       Hash: e4699844af1ab63f6ed6ca4ad186ddcb
@@ -1855,6 +1934,12 @@ ScriptsOnlyBuild:
     className: FullScreenPassRendererFeature
   - hash:
       serializedVersion: 2
+      Hash: dd268f0ac375e4777162bae344364f3a
+    assemblyName: Coffee.UIParticle
+    namespaceName: Coffee.UIExtensions
+    className: UIParticle
+  - hash:
+      serializedVersion: 2
       Hash: f6db34ec3c3d6330db9685fc47bcbbd5
     assemblyName: Cinemachine
     namespaceName: Cinemachine
@@ -1903,7 +1988,7 @@ ScriptsOnlyBuild:
     className: CinemachineUniversalPixelPerfect
   - hash:
       serializedVersion: 2
-      Hash: b0f6adee66a3611e8f13828cf2568319
+      Hash: 330fada9851ee7c077ea70346ec074a2
     assemblyName: Assembly-CSharp
     namespaceName: tehelee.networking
     className: ServerGameManager
@@ -1949,6 +2034,12 @@ ScriptsOnlyBuild:
     assemblyName: Cinemachine
     namespaceName: Cinemachine
     className: CinemachineBasicMultiChannelPerlin
+  - hash:
+      serializedVersion: 2
+      Hash: c13adf70ec9777b05527d1b32edc4c16
+    assemblyName: Assembly-CSharp
+    namespaceName: 
+    className: Spin
   - hash:
       serializedVersion: 2
       Hash: 116a5d45ac93b8a51d0a895f4b9c4df2
@@ -1997,12 +2088,6 @@ ScriptsOnlyBuild:
     assemblyName: Unity.VisualEffectGraph.Runtime
     namespaceName: UnityEngine.VFX.Utility
     className: VFXRaycastBinder
-  - hash:
-      serializedVersion: 2
-      Hash: 751e5bae2a317288c2ab58d66687092b
-    assemblyName: Assembly-CSharp
-    namespaceName: TMPro
-    className: TMP_IpAddressValidator
   platform: 19
   scenePathNames:
   - Assets/Scenes/Anagram.unity

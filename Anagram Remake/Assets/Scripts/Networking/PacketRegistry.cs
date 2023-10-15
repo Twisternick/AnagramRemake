@@ -17,6 +17,8 @@ namespace tehelee.networking
         GetClientID,
         ShowLetterPlacement,
         GetLetterPlacement,
-        Timer
+        Timer,
+        Score,
+        PlayerReady
     }
 }

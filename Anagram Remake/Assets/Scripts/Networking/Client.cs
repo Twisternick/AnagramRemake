@@ -185,7 +185,7 @@ namespace tehelee.networking
             driver.ScheduleUpdate().Complete();
 
             NetworkConnection.State connectionState = driver.GetConnectionState(connection);
-            print(connectionState);
+            //print(connectionState);
 
             if (connectionState == NetworkConnection.State.Disconnected && reattemptFailedConnections && reconnectAttempts < 10)
             {

@@ -9,12 +9,12 @@ namespace testingui.networking.packets
 
         public override ushort id { get { return (ushort)PacketRegistry.GetLetterPlacement; } }
 
-        public override int bytes { get { return sizeof(ushort) + 4 + sizeof(int); } }
+        public override int bytes { get { return sizeof(int) + 4 + sizeof(int); } }
 
         ////////////////////////////////
 
 
-        public ushort networkId;
+        public int networkId;
 
         public int textLength;
 
@@ -27,14 +27,14 @@ namespace testingui.networking.packets
 
         public GetLetterPlacement(ref DataStreamReader reader) : base(ref reader)
         {
-            networkId = reader.ReadUShort();
+            networkId = reader.ReadInt();
 
             textLength = reader.ReadInt();
         }
 
         public override void Write(ref DataStreamWriter writer)
         {
-            writer.WriteUShort(networkId);
+            writer.WriteInt(networkId);
 
             writer.WriteInt(textLength);
         }

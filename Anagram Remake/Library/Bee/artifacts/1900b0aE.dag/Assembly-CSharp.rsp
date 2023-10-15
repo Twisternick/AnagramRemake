@@ -395,6 +395,7 @@
 "Assets/Scripts/Networking/Packets/PacketBundle.cs"
 "Assets/Scripts/Networking/Packets/RecieveClientID.cs"
 "Assets/Scripts/Networking/Packets/Round.cs"
+"Assets/Scripts/Networking/Packets/Score.cs"
 "Assets/Scripts/Networking/Packets/SendServerClose.cs"
 "Assets/Scripts/Networking/Packets/ServerClose.cs"
 "Assets/Scripts/Networking/Packets/ShowLetterPlacement.cs"

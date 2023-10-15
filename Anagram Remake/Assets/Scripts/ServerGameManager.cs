@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics.Tracing;
 using System.IO;
 using System.Linq;
 using tehelee.networking.packets;
@@ -29,7 +30,7 @@ namespace tehelee.networking
             RoundFiveSentLetters,
             ScoreRecap
         }
-
+        [SerializeField]
         private GameState _gameState;
 
         public GameState gameState
@@ -38,6 +39,7 @@ namespace tehelee.networking
             get { return _gameState; }
             set
             {
+                print(value);
                 _gameState = value;
                 SetGameState();
             }
@@ -71,6 +73,8 @@ namespace tehelee.networking
 
         private float roundTimer = 120f;
 
+        private string pickedAnagram;
+
         private List<string> anagrams = new List<string>();
 
         private List<string> words = new List<string>();
@@ -85,7 +89,7 @@ namespace tehelee.networking
                 Server.instance.RegisterListener(PacketRegistry.GetClientID, GetClientIDFromConnection);
                 Server.instance.RegisterListener(PacketRegistry.ShowLetterPlacement, OnLetterPlacement);
             });
-            InvokeRepeating("SendHeartBeat", 2f, 2f);
+            InvokeRepeating("SendHeartBeat", 1f, 1f);
             _gameState = GameState.Waiting;
             GetAnagramList();
         }
@@ -102,15 +106,23 @@ namespace tehelee.networking
             {
                 threeScoreIndex = UnityEngine.Random.Range(0, 9);
             } while (threeScoreIndex == twoScoreIndex);
-            
+
             currentBoardLetters = "";
             serverLetters.Clear();
             roundTimer = 120f;
             Server.instance.Send(new testingui.networking.packets.Round() { roundState = Round.RoundState.roundStart, counter = (int)gameState / 2, clientToChoose = 0 });
+            //Server.instance.Send(new testingui.networking.packets.GetLetterPlacement() { networkId = -1 });
             if (gameState == GameState.RoundFiveGetLetters)
             {
+                twoScoreIndex = -1;
+                threeScoreIndex = -1;
                 GetNineLetterAnagram();
             }
+        }
+
+        public void ResetGame()
+        {
+            clients.Clear();
         }
 
         public ReadResult GetClientIDFromConnection(NetworkConnection networkConnection, ref DataStreamReader dataStreamReader)
@@ -158,8 +170,31 @@ namespace tehelee.networking
             Word word = new Word(ref dataStreamReader);
 
             //StartCoroutine(GetWordFromDictionary(word.text, word.networkId));
-            CheckWordFromDictionary(word.text, word.networkId, word.score);
-
+            if (gameState == GameState.RoundFiveSentLetters)
+            {
+                if (word.text == pickedAnagram)
+                {
+                    //Server.instance.Send(new ValidWord() { networkId = word.networkId, isValid = true, score = 9 });
+                    Player player = clients.Find(x => x.id == word.networkId);
+                    player.score += 9;
+                    player.words[((int)gameState - 1) / 2] = word.text;
+                    /* foreach (Player player in clients)
+                    {
+                        if (player.id == word.networkId)
+                        {
+                            player.score += 9;
+                            player.words[((int)gameState - 1) / 2] = word.text;
+                        }
+                        Server.instance.Send(new testingui.networking.packets.Score() { networkId = (ushort)player.id, score = player.score });
+                    } */
+                    gameState++;
+                }
+                return ReadResult.Consumed;
+            }
+            else
+            {
+                CheckWordFromDictionary(word.text, word.networkId, word.score);
+            }
             return ReadResult.Consumed;
         }
 
@@ -255,6 +290,10 @@ namespace tehelee.networking
 
         public void CheckWordFromDictionary(string word, ushort id, int score)
         {
+            if (gameState == GameState.Waiting || gameState == GameState.ScoreRecap)
+            {
+                return;
+            }
             bool valid = words.Find(x => x == word.ToLower()) != null;
             Player player = clients.Find(x => x.id == id);
             if (valid)
@@ -263,9 +302,19 @@ namespace tehelee.networking
                 player.score += score;
             }
             Server.instance.Send(new ValidWord() { networkId = id, isValid = valid, score = player.score });
-            if (clients.TrueForAll(x => x.words[((int)gameState - 1) / 2] != ""))
+            if (gameState != GameState.RoundFiveSentLetters)
             {
-                gameState++;
+                if (clients.TrueForAll(x => x.words[((int)gameState - 1) / 2] != ""))
+                {
+                    gameState++;
+                }
+            }
+            else
+            {
+                if (valid)
+                {
+                    gameState++;
+                }
             }
         }
 
@@ -283,6 +332,18 @@ namespace tehelee.networking
                 {
                     OnRoundStart();
                 }
+            }
+            else if (gameState == GameState.ScoreRecap)
+            {
+                Server.instance.Send(new testingui.networking.packets.Round() { roundState = Round.RoundState.roundEnd, counter = (int)gameState / 2, clientToChoose = 0 });
+                int highestScore = clients.Max(x => x.score);
+                foreach (Player player in clients)
+                {
+                    print("Player " + player.id + " Score: " + player.score);
+                    Server.instance.Send(new testingui.networking.packets.Score() { networkId = player.id, score = player.score, winner = player.score == highestScore});
+                }
+                gameState = GameState.Waiting;
+                ResetGame();
             }
         }
 
@@ -336,6 +397,7 @@ namespace tehelee.networking
 
             List<char> anagram = anagrams[r].ToList();
             print(anagrams[r]);
+            pickedAnagram = anagrams[r].ToLower();
             anagram.Shuffle();
             for (int i = 0; i < 9; i++)
             {
@@ -344,7 +406,7 @@ namespace tehelee.networking
                 serverLetters.Add(serverLetter);
                 currentBoardLetters += serverLetter.letter;
             }
-            Server.instance.Send(new testingui.networking.packets.Letter() { networkId = 0, text = currentBoardLetters });
+            Server.instance.Send(new testingui.networking.packets.Letter() { networkId = 0, text = currentBoardLetters, doubleLetterIndex = -1, tripleLetterIndex = -1 });
 
             gameState++;
         }

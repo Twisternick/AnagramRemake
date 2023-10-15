@@ -23,15 +23,22 @@ namespace tehelee.networking
         public class Opponent
         {
             public int networkId;
+
+            public string name;
             public int letterCount;
             public List<GameObject> letterPlaceholders = new List<GameObject>();
+
+            public TextMeshProUGUI scoreText;
+
+            public int score;
         }
 
         [SerializeField] private List<Letter> letters;
         [SerializeField] private List<Placeholders> placeholders;
 
         [SerializeField] private List<Opponent> opponents = new List<Opponent>();
-        [SerializeField] private GameObject opponentLetterPrefab;
+        [SerializeField] private GameObject opponentLetterPrefab, winnerEndScreen, loserEndScreen;
+        [SerializeField] private TextMeshProUGUI loserPlayerScorePrefab, winnerPlayerScorePrefab;
 
         [SerializeField] private StandaloneInputModule inputModule;
 
@@ -53,11 +60,15 @@ namespace tehelee.networking
 
         private int potientalScore, score;
 
+        private List<TextMeshProUGUI> scoreTexts = new List<TextMeshProUGUI>();
+
         private Coroutine backSpaceCoroutine;
 
         public bool canPlay;
         [SerializeField]
         private float tickUpTime;
+
+        private bool winner = false, playAgain = false;
 
 
         // Start is called before the first frame update
@@ -73,9 +84,11 @@ namespace tehelee.networking
                 Client.instance.RegisterListener(PacketRegistry.GetLetterPlacement, OnOpponentLetterPlacement);
                 Client.instance.RegisterListener(PacketRegistry.Timer, OnTimer);
                 Client.instance.RegisterListener(PacketRegistry.Heartbeat, SendHeartBeat);
+                Client.instance.RegisterListener(PacketRegistry.Score, OnScore);
             }
             );
             ClearLetterBank();
+            playAgain = true;
         }
         void Start()
         {
@@ -92,41 +105,58 @@ namespace tehelee.networking
         private ReadResult OnRecieveClientID(NetworkConnection networkConnection, ref DataStreamReader reader)
         {
             RecieveClientID recieveClientID = new RecieveClientID(ref reader);
-            if (networkId == -1)
+            if (playAgain)
             {
-
-                networkId = recieveClientID.networkId;
-                clientIDText.text = "Client ID: " + networkId;
-                return ReadResult.Consumed;
+                if (networkId == -1)
+                {
+                    
+                    networkId = recieveClientID.networkId;
+                    clientIDText.text = "Client ID: " + networkId;
+                    winnerEndScreen.SetActive(false);
+                    loserEndScreen.SetActive(false);
+                    for (int i = scoreTexts.Count - 1; i >= 0; i--)
+                    {
+                        Destroy(scoreTexts[i].gameObject);
+                    }
+                    scoreTexts.Clear();
+                    ResetBoardState();
+                    roundText.text = "Round: 1/5";
+                    return ReadResult.Consumed;
+                }
+                else
+                {
+                    if (networkId == recieveClientID.networkId)
+                    {
+                        return ReadResult.Skipped;
+                    }
+                    if (opponents.Find(x => x.networkId == recieveClientID.networkId) != null)
+                    {
+                        return ReadResult.Skipped;
+                    }
+                    Opponent opponent = new Opponent();
+                    opponent.networkId = recieveClientID.networkId;
+                    opponent.name = "Player " + (opponent.networkId + 1);
+                    opponent.letterCount = 0;
+                    opponent.letterPlaceholders = new List<GameObject>();
+                    GameObject opp = Instantiate(opponentLetterPrefab, opponentLetterPrefab.transform.parent);
+                    opp.SetActive(true);
+                    opp.GetComponentInChildren<TextMeshProUGUI>().text = "Opponent " + opponent.networkId;
+                    foreach (var child in opp.GetComponentsInChildren<RectTransform>(true))
+                    {
+                        if (child.name == opp.name || child.GetComponent<TextMeshProUGUI>() != null)
+                        {
+                            continue;
+                        }
+                        opponent.letterPlaceholders.Add(child.gameObject);
+                        child.gameObject.SetActive(false);
+                    }
+                    opponents.Add(opponent);
+                    return ReadResult.Processed;
+                }
             }
             else
             {
-                if (networkId == recieveClientID.networkId)
-                {
-                    return ReadResult.Skipped;
-                }
-                if (opponents.Find(x => x.networkId == recieveClientID.networkId) != null)
-                {
-                    return ReadResult.Skipped;
-                }
-                Opponent opponent = new Opponent();
-                opponent.networkId = recieveClientID.networkId;
-                opponent.letterCount = 0;
-                opponent.letterPlaceholders = new List<GameObject>();
-                GameObject opp = Instantiate(opponentLetterPrefab, opponentLetterPrefab.transform.parent);
-                opp.SetActive(true);
-                opp.GetComponentInChildren<TextMeshProUGUI>().text = "Opponent " + opponent.networkId;
-                foreach (var child in opp.GetComponentsInChildren<RectTransform>(true))
-                {
-                    if (child.name == opp.name || child.GetComponent<TextMeshProUGUI>() != null)
-                    {
-                        continue;
-                    }
-                    opponent.letterPlaceholders.Add(child.gameObject);
-                    child.gameObject.SetActive(false);
-                }
-                opponents.Add(opponent);
-                return ReadResult.Processed;
+                return ReadResult.Skipped;
             }
         }
 
@@ -134,7 +164,7 @@ namespace tehelee.networking
         {
             Round round = new Round(ref reader);
 
-            if (round.roundState == Round.RoundState.roundStart)
+            if (round.roundState == Round.RoundState.roundStart && networkId != -1)
             {
                 canPlay = true;
                 roundText.text = "Round: " + (round.counter + 1) + "/5";
@@ -151,10 +181,58 @@ namespace tehelee.networking
             return ReadResult.Processed;
         }
 
+        private ReadResult OnScore(NetworkConnection networkConnection, ref DataStreamReader reader)
+        {
+            testingui.networking.packets.Score scorePacket = new testingui.networking.packets.Score(ref reader);
+            print("Score: " + scorePacket.score);
+            print("Winner: " + scorePacket.winner);
+            print("Network ID: " + scorePacket.networkId);
+            print("My Network ID: " + networkId);
+            if (scorePacket.networkId == networkId)
+            {
+                canPlay = false;
+                playAgain = false;
+                winner = scorePacket.winner;
+                StartCoroutine(TickUpScore(score, scorePacket.score * 10, scorePacket.winner));
+                networkId = -1;
+            }
+            else if (networkId == -1)
+            {
+                Opponent opp = opponents.Find(x => x.networkId == scorePacket.networkId);
+                opp.score = scorePacket.score;
+                if (winner)
+                {
+                    return ReadResult.Processed;
+                }
+                if (opp.scoreText == null)
+                {
+                    TextMeshProUGUI scoreText = Instantiate(loserPlayerScorePrefab, loserPlayerScorePrefab.transform.parent);
+                    scoreText.gameObject.SetActive(true);
+                    scoreText.text = opp.name + ": " + (opp.score * 10);
+                    print("In OnScore is null: " + opp.name + ": " + (opp.score * 10));
+                    scoreTexts.Add(scoreText);
+                    opp.scoreText = scoreText;
+                }
+                else
+                {
+                    print("In OnScore not null: " + opp.name + ": " + (opp.score * 10));
+                    opp.scoreText.text = opp.name + ": " + (opp.score * 10);
+                }
+                // Need to figure out how to set the end screen after someone finishes the anagram or doesn't
+                // Also need to figure out how to finish a round if the timer runs out
+            }
+            else
+            {
+                Opponent opp = opponents.Find(x => x.networkId == scorePacket.networkId);
+                opp.score = scorePacket.score;
+            }
+
+            return ReadResult.Processed;
+        }
+
         private ReadResult OnOpponentLetterPlacement(NetworkConnection networkConnection, ref DataStreamReader reader)
         {
             GetLetterPlacement getLetterPlacement = new GetLetterPlacement(ref reader);
-
             if (getLetterPlacement.networkId != networkId)
             {
                 // Show the opponents letter count placed
@@ -263,6 +341,7 @@ namespace tehelee.networking
                 placeHolderIndex--;
                 letters[index].used = false;
                 letters[index].ResetPosition();
+                Client.instance.Send(new testingui.networking.packets.ShowLetterPlacement() { networkId = (ushort)networkId, textLength = placeHolderIndex });
             }
             else
             {
@@ -320,7 +399,7 @@ namespace tehelee.networking
                     letters[placeholders[placeHolderIndex].letterIndex].ResetPosition();
                 }
                 placeholders[placeHolderIndex].letterIndex = -1;
-
+                Client.instance.Send(new testingui.networking.packets.ShowLetterPlacement() { networkId = (ushort)networkId, textLength = placeHolderIndex });
             }
 
         }
@@ -377,7 +456,27 @@ namespace tehelee.networking
             {
                 placeholder.letterIndex = -1;
             }
+            foreach (var opp in opponents)
+            {
+                foreach (var letter in opp.letterPlaceholders)
+                {
+                    letter.SetActive(false);
+                }
+            }
+        }
 
+        public void PlayAgain()
+        {
+            networkId = -1;
+            playAgain = true;
+            score = 0;
+            scoreText.text = "Score: " + score;
+            foreach (Opponent opp in opponents)
+            {
+                Destroy(opp.letterPlaceholders[0].transform.parent.gameObject);
+            }
+            opponents.Clear();
+            Client.instance.Send(new testingui.networking.packets.GetClientID() { });
         }
 
         public void ShuffleLetterBank()
@@ -446,6 +545,41 @@ namespace tehelee.networking
                 oldScore++;
                 scoreText.text = "Score: " + oldScore;
                 yield return new WaitForSeconds(tickUpTime);
+            }
+        }
+
+        private IEnumerator TickUpScore(int oldScore, int newScore, bool winner)
+        {
+            score = newScore;
+            playAgain = false;
+            while (oldScore < score)
+            {
+                oldScore++;
+                scoreText.text = "Score: " + oldScore;
+                yield return new WaitForSeconds(tickUpTime / 2f);
+            }
+            if (winner)
+            {
+                // Show winner screen
+                winnerEndScreen.SetActive(true);
+            }
+            else
+            {
+                // Show loser screen
+                loserEndScreen.SetActive(true);
+                TextMeshProUGUI scoreText = Instantiate(loserPlayerScorePrefab, loserPlayerScorePrefab.transform.parent);
+                scoreText.gameObject.SetActive(true);
+                scoreText.text = "Me: " + score;
+                scoreTexts.Add(scoreText);
+                foreach (var opp in opponents)
+                {
+                    scoreText = Instantiate(loserPlayerScorePrefab, loserPlayerScorePrefab.transform.parent);
+                    print("In TickUpScore: " + opp.name + ": " + (opp.score * 10));
+                    scoreText.text = opp.name + ": " + (opp.score * 10);
+                    scoreText.gameObject.SetActive(true);
+                    scoreTexts.Add(scoreText);
+                    opp.scoreText = scoreText;
+                }
             }
         }
 
