@@ -30,6 +30,8 @@ namespace tehelee.networking
 
             public TextMeshProUGUI scoreText;
 
+            public string word;
+
             public int score;
         }
 
@@ -43,11 +45,12 @@ namespace tehelee.networking
         [SerializeField] private StandaloneInputModule inputModule;
 
         [SerializeField] private TextMeshProUGUI clientIDText;
-        [SerializeField] private TextMeshProUGUI scoreText;
+        [SerializeField] private TextMeshProUGUI scoreText, summaryScoreText;
 
         [SerializeField] private Image timerImage;
 
         [SerializeField] private TextMeshProUGUI roundText;
+
         private int phIn;
         public int placeHolderIndex
         {
@@ -69,6 +72,10 @@ namespace tehelee.networking
         private float tickUpTime;
 
         private bool winner = false, playAgain = false;
+
+        private string myWord = "";
+
+        private GameObject playAgainButton;
 
 
         // Start is called before the first frame update
@@ -109,7 +116,7 @@ namespace tehelee.networking
             {
                 if (networkId == -1)
                 {
-                    
+
                     networkId = recieveClientID.networkId;
                     clientIDText.text = "Client ID: " + networkId;
                     winnerEndScreen.SetActive(false);
@@ -166,8 +173,10 @@ namespace tehelee.networking
 
             if (round.roundState == Round.RoundState.roundStart && networkId != -1)
             {
-                canPlay = true;
+                print("Round Start");
+                //canPlay = true;
                 roundText.text = "Round: " + (round.counter + 1) + "/5";
+                timerImage.fillAmount = 1f;
                 ResetBoardState();
             }
 
@@ -178,6 +187,12 @@ namespace tehelee.networking
         {
             testingui.networking.packets.Timer timer = new testingui.networking.packets.Timer(ref reader);
             timerImage.fillAmount = timer.time / 120f;
+            if (timer.time <= 0)
+            {
+                canPlay = false;
+                // Send to server to submit word of currently placed letters
+
+            }
             return ReadResult.Processed;
         }
 
@@ -186,47 +201,85 @@ namespace tehelee.networking
             testingui.networking.packets.Score scorePacket = new testingui.networking.packets.Score(ref reader);
             print("Score: " + scorePacket.score);
             print("Winner: " + scorePacket.winner);
+            print("Round: " + scorePacket.round);
             print("Network ID: " + scorePacket.networkId);
             print("My Network ID: " + networkId);
-            if (scorePacket.networkId == networkId)
+            if (scorePacket.round == 5)
             {
-                canPlay = false;
-                playAgain = false;
-                winner = scorePacket.winner;
-                StartCoroutine(TickUpScore(score, scorePacket.score * 10, scorePacket.winner));
-                networkId = -1;
-            }
-            else if (networkId == -1)
-            {
-                Opponent opp = opponents.Find(x => x.networkId == scorePacket.networkId);
-                opp.score = scorePacket.score;
-                if (winner)
+                if (scorePacket.networkId == networkId)
                 {
-                    return ReadResult.Processed;
+                    canPlay = false;
+                    playAgain = false;
+                    winner = scorePacket.winner;
+                    StartCoroutine(TickUpScore(score, scorePacket.score * 10, scorePacket.winner));
+                    networkId = -1;
                 }
-                if (opp.scoreText == null)
+                else if (networkId == -1)
                 {
-                    TextMeshProUGUI scoreText = Instantiate(loserPlayerScorePrefab, loserPlayerScorePrefab.transform.parent);
-                    scoreText.gameObject.SetActive(true);
-                    scoreText.text = opp.name + ": " + (opp.score * 10);
-                    print("In OnScore is null: " + opp.name + ": " + (opp.score * 10));
-                    scoreTexts.Add(scoreText);
-                    opp.scoreText = scoreText;
+                    Opponent opp = opponents.Find(x => x.networkId == scorePacket.networkId);
+                    opp.score = scorePacket.score;
+                    if (winner)
+                    {
+                        return ReadResult.Processed;
+                    }
+                    if (opp.scoreText == null)
+                    {
+                        TextMeshProUGUI scoreText = Instantiate(loserPlayerScorePrefab, loserPlayerScorePrefab.transform.parent);
+                        scoreText.gameObject.SetActive(true);
+                        scoreText.text = opp.name + ": " + (opp.score * 10);
+                        print("In OnScore is null: " + opp.name + ": " + (opp.score * 10));
+                        scoreTexts.Add(scoreText);
+                        opp.scoreText = scoreText;
+                    }
+                    else
+                    {
+                        print("In OnScore not null: " + opp.name + ": " + (opp.score * 10));
+                        opp.scoreText.text = opp.name + ": " + (opp.score * 10);
+                    }
+                    // Need to figure out how to set the end screen after someone finishes the anagram or doesn't
+                    // Also need to figure out how to finish a round if the timer runs out
                 }
                 else
                 {
-                    print("In OnScore not null: " + opp.name + ": " + (opp.score * 10));
-                    opp.scoreText.text = opp.name + ": " + (opp.score * 10);
+                    Opponent opp = opponents.Find(x => x.networkId == scorePacket.networkId);
+                    opp.score = scorePacket.score;
                 }
-                // Need to figure out how to set the end screen after someone finishes the anagram or doesn't
-                // Also need to figure out how to finish a round if the timer runs out
             }
             else
             {
-                Opponent opp = opponents.Find(x => x.networkId == scorePacket.networkId);
-                opp.score = scorePacket.score;
+                if (scorePacket.networkId == networkId)
+                {
+                    canPlay = false;
+                    StartCoroutine(TickUpScore(score, scorePacket.score * 10, scorePacket.round));
+                }
+                else
+                {
+                    Opponent opp = opponents.Find(x => x.networkId == scorePacket.networkId);
+                    opp.score = scorePacket.score;
+                    opp.word = scorePacket.word;
+                    if (opp.scoreText == null)
+                    {
+                        TextMeshProUGUI scoreText = Instantiate(loserPlayerScorePrefab, loserPlayerScorePrefab.transform.parent);
+                        scoreText.gameObject.SetActive(true);
+                        scoreText.text = opp.name + ": " + (opp.score * 10) + " " + scorePacket.word;
+                        print("In OnScore is null: " + opp.name + ": " + (opp.score * 10));
+                        scoreTexts.Add(scoreText);
+                        opp.scoreText = scoreText;
+                    }
+                    else
+                    {
+                        print("In OnScore not null: " + opp.name + ": " + (opp.score * 10));
+                        opp.scoreText.text = opp.name + ": " + (opp.score * 10) + " " + scorePacket.word;
+                    }
+                    // Need to figure out how to set the end screen after someone finishes the anagram or doesn't
+                    // Also need to figure out how to finish a round if the timer runs out
+                }
+                /* else
+                {
+                    Opponent opp = opponents.Find(x => x.networkId == scorePacket.networkId);
+                    opp.score = scorePacket.score;
+                } */
             }
-
             return ReadResult.Processed;
         }
 
@@ -303,16 +356,19 @@ namespace tehelee.networking
         {
             foreach (char c in Input.inputString)
             {
-                int index = letters.FindIndex(x => x.letter.ToLower() == c.ToString() && x.used == false);
-                if (index != -1)
+                for (int i = 3; i >= 1; i--) // This gets highest value letter first
                 {
-                    // Add Letter to be shown
-                    placeholders[placeHolderIndex].letterIndex = index;
-                    letters[index].used = true;
-                    letters[index].MoveToPosition(placeholders[placeHolderIndex].transform.position + new Vector3(0f, 55f, 0f));
-                    placeHolderIndex++;
-                    Client.instance.Send(new testingui.networking.packets.ShowLetterPlacement() { networkId = (ushort)networkId, textLength = placeHolderIndex });
-
+                    int index = letters.FindIndex(x => x.letter.ToLower() == c.ToString() && x.used == false && x.value == i);
+                    if (index != -1)
+                    {
+                        // Add Letter to be shown
+                        placeholders[placeHolderIndex].letterIndex = index;
+                        letters[index].used = true;
+                        letters[index].MoveToPosition(placeholders[placeHolderIndex].transform.position + new Vector3(0f, 55f, 0f));
+                        placeHolderIndex++;
+                        Client.instance.Send(new testingui.networking.packets.ShowLetterPlacement() { networkId = (ushort)networkId, textLength = placeHolderIndex });
+                        return;
+                    }
                 }
             }
         }
@@ -463,6 +519,7 @@ namespace tehelee.networking
                     letter.SetActive(false);
                 }
             }
+            loserEndScreen.SetActive(false);
         }
 
         public void PlayAgain()
@@ -524,17 +581,17 @@ namespace tehelee.networking
             {
                 return;
             }
-            string test = "";
+            myWord = "";
             potientalScore = 0;
             foreach (Placeholders p in placeholders)
             {
                 if (p.letterIndex >= 0)
                 {
-                    test += letters[p.letterIndex].letter.ToLower();
+                    myWord += letters[p.letterIndex].letter.ToLower();
                     potientalScore += letters[p.letterIndex].value;
                 }
             }
-            Client.instance.Send(new testingui.networking.packets.Word() { text = test, networkId = (ushort)this.networkId, score = potientalScore });
+            Client.instance.Send(new testingui.networking.packets.Word() { text = myWord, networkId = (ushort)this.networkId, score = potientalScore });
         }
 
         private IEnumerator TickUpScore(int oldScore, int newScore)
@@ -566,10 +623,12 @@ namespace tehelee.networking
             else
             {
                 // Show loser screen
-                loserEndScreen.SetActive(true);
+                /* loserEndScreen.SetActive(true);
                 TextMeshProUGUI scoreText = Instantiate(loserPlayerScorePrefab, loserPlayerScorePrefab.transform.parent);
                 scoreText.gameObject.SetActive(true);
                 scoreText.text = "Me: " + score;
+                GameObject playAgainButton = GameObject.FindWithTag("PlayAgainButton");
+                playAgainButton.SetActive(true);
                 scoreTexts.Add(scoreText);
                 foreach (var opp in opponents)
                 {
@@ -579,7 +638,71 @@ namespace tehelee.networking
                     scoreText.gameObject.SetActive(true);
                     scoreTexts.Add(scoreText);
                     opp.scoreText = scoreText;
+                } */
+
+                loserEndScreen.SetActive(true);
+                if (summaryScoreText == null)
+                {
+                    summaryScoreText = Instantiate(loserPlayerScorePrefab, loserPlayerScorePrefab.transform.parent);
                 }
+                //GameObject playAgainButton = GameObject.FindWithTag("PlayAgainButton");
+                playAgainButton.SetActive(true);
+                summaryScoreText.gameObject.SetActive(true);
+                summaryScoreText.text = "Me: " + score;
+                scoreTexts.Add(summaryScoreText);
+                foreach (var opp in opponents)
+                {
+                    if (opp.scoreText == null)
+                    {
+                        scoreText = Instantiate(loserPlayerScorePrefab, loserPlayerScorePrefab.transform.parent);
+                        scoreTexts.Add(scoreText);
+                        opp.scoreText = scoreText;
+                    }
+                    opp.scoreText.text = opp.name + ": " + (opp.score * 10);
+                    opp.scoreText.gameObject.SetActive(true);
+
+                }
+            }
+        }
+
+        private IEnumerator TickUpScore(int oldScore, int newScore, int round)
+        {
+            score = newScore;
+            playAgain = false;
+            while (oldScore < score)
+            {
+                oldScore++;
+                this.scoreText.text = "Score: " + oldScore;
+                yield return new WaitForSeconds(tickUpTime / 2f);
+            }
+
+            // Show loser screen
+            loserEndScreen.SetActive(true);
+            if (summaryScoreText == null)
+            {
+                summaryScoreText = Instantiate(loserPlayerScorePrefab, loserPlayerScorePrefab.transform.parent);
+            }
+            if (playAgainButton == null)
+            {
+                playAgainButton = GameObject.FindWithTag("PlayAgainButton");
+            }
+            playAgainButton.SetActive(false);
+            summaryScoreText.gameObject.SetActive(true);
+            summaryScoreText.text = "Me: " + score + " " + myWord;
+            scoreTexts.Add(summaryScoreText);
+            foreach (var opp in opponents)
+            {
+                if (opp.scoreText == null)
+                {
+                    scoreText = Instantiate(loserPlayerScorePrefab, loserPlayerScorePrefab.transform.parent);
+                    scoreTexts.Add(scoreText);
+                    opp.scoreText = scoreText;
+                }
+                opp.scoreText.text = opp.name + ": " + (opp.score * 10) + " " + opp.word;
+                opp.scoreText.gameObject.SetActive(true);
+                /* print("In TickUpScore: " + opp.name + ": " + (opp.score * 10));
+                scoreText.text = opp.name + ": " + (opp.score * 10);
+                scoreText.gameObject.SetActive(true); */
             }
         }
 

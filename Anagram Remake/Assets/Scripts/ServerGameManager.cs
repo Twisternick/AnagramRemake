@@ -20,12 +20,17 @@ namespace tehelee.networking
             Waiting = -1,
             RoundOneGetLetters,
             RoundOneSentLetters,
+            RoundOneSummary,
             RoundTwoGetLetters,
             RoundTwoSentLetters,
+            RoundTwoSummary,
+
             RoundThreeGetLetters,
             RoundThreeSentLetters,
+            RoundThreeSummary,
             RoundFourGetLetters,
             RoundFourSentLetters,
+            RoundFourSummary,
             RoundFiveGetLetters,
             RoundFiveSentLetters,
             ScoreRecap
@@ -110,7 +115,7 @@ namespace tehelee.networking
             currentBoardLetters = "";
             serverLetters.Clear();
             roundTimer = 120f;
-            Server.instance.Send(new testingui.networking.packets.Round() { roundState = Round.RoundState.roundStart, counter = (int)gameState / 2, clientToChoose = 0 });
+            Server.instance.Send(new testingui.networking.packets.Round() { roundState = Round.RoundState.roundStart, counter = (int)gameState / 3, clientToChoose = 0 });
             //Server.instance.Send(new testingui.networking.packets.GetLetterPlacement() { networkId = -1 });
             if (gameState == GameState.RoundFiveGetLetters)
             {
@@ -177,7 +182,7 @@ namespace tehelee.networking
                     //Server.instance.Send(new ValidWord() { networkId = word.networkId, isValid = true, score = 9 });
                     Player player = clients.Find(x => x.id == word.networkId);
                     player.score += 9;
-                    player.words[((int)gameState - 1) / 2] = word.text;
+                    player.words[((int)gameState - 1) / 3] = word.text;
                     /* foreach (Player player in clients)
                     {
                         if (player.id == word.networkId)
@@ -248,10 +253,22 @@ namespace tehelee.networking
             {
                 serverLetters[^1].amount = 1;
             }
-            if (serverLetters.Count == 9 && (int)gameState % 2 == 0)
+            if (serverLetters.Count == 9)
             {
-                Server.instance.Send(new testingui.networking.packets.CanPlay() { canPlay = true });
-                gameState++;
+                switch (gameState)
+                {
+                    case GameState.RoundOneGetLetters:
+                    case GameState.RoundTwoGetLetters:
+                    case GameState.RoundThreeGetLetters:
+                    case GameState.RoundFourGetLetters:
+                    case GameState.RoundFiveGetLetters:
+                        Server.instance.Send(new testingui.networking.packets.CanPlay() { canPlay = true });
+                        gameState++;
+                        break;
+
+                }
+                /* Server.instance.Send(new testingui.networking.packets.CanPlay() { canPlay = true });
+                gameState++; */
             }
         }
 
@@ -276,10 +293,10 @@ namespace tehelee.networking
                                 print("NETWORKD ID: " + id); */
                 if (valid)
                 {
-                    clients.Find(x => x.id == id).words[((int)gameState - 1) / 2] = word;
+                    clients.Find(x => x.id == id).words[((int)gameState - 1) / 3] = word;
                 }
                 Server.instance.Send(new ValidWord() { networkId = id, isValid = valid });
-                if (clients.TrueForAll(x => x.words[((int)gameState - 1) / 2] != ""))
+                if (clients.TrueForAll(x => x.words[((int)gameState - 1) / 3] != ""))
                 {
                     gameState++;
                 }
@@ -290,21 +307,31 @@ namespace tehelee.networking
 
         public void CheckWordFromDictionary(string word, ushort id, int score)
         {
-            if (gameState == GameState.Waiting || gameState == GameState.ScoreRecap)
+            switch (gameState)
             {
-                return;
+                case GameState.Waiting:
+                case GameState.ScoreRecap:
+                case GameState.RoundOneSummary:
+                case GameState.RoundTwoSummary:
+                case GameState.RoundThreeSummary:
+                case GameState.RoundFourSummary:
+                    return;
             }
             bool valid = words.Find(x => x == word.ToLower()) != null;
             Player player = clients.Find(x => x.id == id);
             if (valid)
             {
-                player.words[((int)gameState - 1) / 2] = word;
+                player.words[((int)gameState - 1) / 3] = word;
                 player.score += score;
+            }
+            else
+            {
+                //player.words[((int)gameState - 1) / 3] = " ";
             }
             Server.instance.Send(new ValidWord() { networkId = id, isValid = valid, score = player.score });
             if (gameState != GameState.RoundFiveSentLetters)
             {
-                if (clients.TrueForAll(x => x.words[((int)gameState - 1) / 2] != ""))
+                if (clients.TrueForAll(x => x.words[((int)gameState - 1) / 3] != ""))
                 {
                     gameState++;
                 }
@@ -326,54 +353,125 @@ namespace tehelee.networking
 
         public void SetGameState()
         {
-            if (gameState != GameState.Waiting && gameState != GameState.ScoreRecap)
+            int highestScore;
+            switch (gameState)
             {
-                if (((int)gameState) % 2 == 0)
-                {
+                case GameState.Waiting:
+                    return;
+
+                case GameState.RoundOneGetLetters:
+                case GameState.RoundTwoGetLetters:
+                case GameState.RoundThreeGetLetters:
+                case GameState.RoundFourGetLetters:
+                case GameState.RoundFiveGetLetters:
                     OnRoundStart();
-                }
-            }
-            else if (gameState == GameState.ScoreRecap)
-            {
-                Server.instance.Send(new testingui.networking.packets.Round() { roundState = Round.RoundState.roundEnd, counter = (int)gameState / 2, clientToChoose = 0 });
-                int highestScore = clients.Max(x => x.score);
-                foreach (Player player in clients)
-                {
-                    print("Player " + player.id + " Score: " + player.score);
-                    Server.instance.Send(new testingui.networking.packets.Score() { networkId = player.id, score = player.score, winner = player.score == highestScore});
-                }
-                gameState = GameState.Waiting;
-                ResetGame();
+                    break;
+                case GameState.RoundOneSentLetters:
+                case GameState.RoundTwoSentLetters:
+                case GameState.RoundThreeSentLetters:
+                case GameState.RoundFourSentLetters:
+                case GameState.RoundFiveSentLetters:
+
+                    break;
+
+                case GameState.RoundOneSummary:
+                case GameState.RoundTwoSummary:
+                case GameState.RoundThreeSummary:
+                case GameState.RoundFourSummary:
+                    Server.instance.Send(new testingui.networking.packets.Round() { roundState = Round.RoundState.roundEnd, counter = (int)gameState / 3, clientToChoose = 0 });
+                    highestScore = clients.Max(x => x.score);
+                    foreach (Player player in clients)
+                    {
+                        print("Player " + player.id + " Score: " + player.score);
+                        Server.instance.Send(new testingui.networking.packets.Score() { networkId = player.id, score = player.score, round = (int)gameState / 3, winner = false, word = player.words[((int)gameState - 1) / 3] });
+                    }
+
+                    StartCoroutine(WaitForRecap());
+                    break;
+
+                case GameState.ScoreRecap:
+                    Server.instance.Send(new testingui.networking.packets.Round() { roundState = Round.RoundState.roundEnd, counter = (int)gameState / 3, clientToChoose = 0 });
+                    highestScore = clients.Max(x => x.score);
+                    foreach (Player player in clients)
+                    {
+                        print("Player " + player.id + " Score: " + player.score);
+                        Server.instance.Send(new testingui.networking.packets.Score() { networkId = player.id, score = player.score, round = (int)gameState / 3, winner = player.score == highestScore });
+                    }
+                    gameState = GameState.Waiting;
+                    ResetGame();
+                    break;
             }
         }
 
         void Update()
         {
-            if (gameState != GameState.Waiting && gameState != GameState.ScoreRecap)
+            switch (gameState)
             {
-                if ((int)gameState % 2 == 1)
-                {
+                case GameState.Waiting:
+                case GameState.ScoreRecap:
+                case GameState.RoundOneSummary:
+                case GameState.RoundTwoSummary:
+                case GameState.RoundThreeSummary:
+                case GameState.RoundFourSummary:
+                case GameState.RoundOneGetLetters:
+                case GameState.RoundTwoGetLetters:
+                case GameState.RoundThreeGetLetters:
+                case GameState.RoundFourGetLetters:
+                case GameState.RoundFiveGetLetters:
+                    return;
+                case GameState.RoundOneSentLetters:
+                case GameState.RoundTwoSentLetters:
+                case GameState.RoundThreeSentLetters:
+                case GameState.RoundFourSentLetters:
+                case GameState.RoundFiveSentLetters:
                     if (roundTimer > 0)
                     {
                         roundTimer -= Time.deltaTime;
                     }
-                }
-                /* if (roundTimer <= 0)
-                {
-                    gameState++;
-                    roundTimer = 120f;
-                } */
+                    else
+                    {
+                        gameState++;
+                    }
+                    break;
             }
         }
         void FixedUpdate()
         {
-            if (gameState != GameState.Waiting && gameState != GameState.ScoreRecap)
+            switch (gameState)
+            {
+                case GameState.Waiting:
+                case GameState.ScoreRecap:
+                case GameState.RoundOneSummary:
+                case GameState.RoundTwoSummary:
+                case GameState.RoundThreeSummary:
+                case GameState.RoundFourSummary:
+                case GameState.RoundOneGetLetters:
+                case GameState.RoundTwoGetLetters:
+                case GameState.RoundThreeGetLetters:
+                case GameState.RoundFourGetLetters:
+                case GameState.RoundFiveGetLetters:
+                    return;
+                case GameState.RoundOneSentLetters:
+                case GameState.RoundTwoSentLetters:
+                case GameState.RoundThreeSentLetters:
+                case GameState.RoundFourSentLetters:
+                case GameState.RoundFiveSentLetters:
+                    Server.instance.Send(new testingui.networking.packets.Timer() { time = roundTimer });
+                    break;
+            }
+            /* if (gameState != GameState.Waiting && gameState != GameState.ScoreRecap)
             {
                 if ((int)gameState % 2 == 1)
                 {
-                    Server.instance.Send(new testingui.networking.packets.Timer() { time = roundTimer });
+
                 }
-            }
+            } */
+        }
+
+        private IEnumerator WaitForRecap()
+        {
+            yield return new WaitForSeconds(7f);
+            gameState++;
         }
 
         public void GetAnagramList()

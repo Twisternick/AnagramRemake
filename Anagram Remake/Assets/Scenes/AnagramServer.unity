@@ -169,7 +169,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   readHandlerErrorMessage: 
-  serverAddress: 192.168.1.11
+  serverAddress: 192.168.1.12
   port: 16464
   debug: 0
   playerLimit: 32
@@ -191,6 +191,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 564e289b77898974aabafc3b33f99e5b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _gameState: 0
   currentBoardLetters: 
   roundFiveAnagram: 
   clients: []

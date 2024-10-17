@@ -47,7 +47,6 @@ ScriptsOnlyBuild:
     Unity.Rider.Editor.dll:
     - Packages.Rider.Editor.UnitTesting.CallbackData
     Unity.ShaderGraph.Editor.dll:
-    - UnityEditor.ShaderGraph.ShaderGraphProjectSettings
     - UnityEditor.ShaderGraph.SubGraphAsset
     Unity.TextMeshPro:
     - TMPro.TMP_FontAsset
@@ -378,27 +377,27 @@ ScriptsOnlyBuild:
     - Class: 114
       Script: {instanceID: 8754}
     - Class: 114
-      Script: {instanceID: 8884}
+      Script: {instanceID: 8886}
     - Class: 114
-      Script: {instanceID: 8910}
+      Script: {instanceID: 8912}
     - Class: 114
-      Script: {instanceID: 8976}
+      Script: {instanceID: 8978}
     - Class: 114
-      Script: {instanceID: 9004}
+      Script: {instanceID: 9006}
     - Class: 114
-      Script: {instanceID: 9378}
+      Script: {instanceID: 9380}
     - Class: 114
-      Script: {instanceID: 9920}
+      Script: {instanceID: 9922}
     - Class: 114
-      Script: {instanceID: 9994}
+      Script: {instanceID: 9996}
     - Class: 114
-      Script: {instanceID: 10274}
+      Script: {instanceID: 10276}
     - Class: 114
-      Script: {instanceID: 10648}
+      Script: {instanceID: 10650}
     - Class: 114
-      Script: {instanceID: 10730}
+      Script: {instanceID: 10732}
     - Class: 114
-      Script: {instanceID: 10998}
+      Script: {instanceID: 11000}
     - Class: 115
       Script: {instanceID: 0}
     - Class: 128
@@ -752,7 +751,7 @@ ScriptsOnlyBuild:
     className: Shared
   - hash:
       serializedVersion: 2
-      Hash: 1323d114bf25352384d077efa67ea9f6
+      Hash: a63723f409b4e0a236a641e42f17d896
     assemblyName: Assembly-CSharp
     namespaceName: tehelee.networking
     className: InputManager
@@ -2091,4 +2090,4 @@ ScriptsOnlyBuild:
   platform: 19
   scenePathNames:
   - Assets/Scenes/Anagram.unity
-  playerPath: C:/Users/annic/Desktop/Anagram/Anagram Remake.exe
+  playerPath: C:/Users/annic/Desktop/Anagram Royale/Anagram Remake.exe

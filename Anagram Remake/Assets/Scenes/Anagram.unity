@@ -21536,6 +21536,7 @@ MonoBehaviour:
   inputModule: {fileID: 2015050444}
   clientIDText: {fileID: 1818411456}
   scoreText: {fileID: 1850775201}
+  summaryScoreText: {fileID: 0}
   timerImage: {fileID: 828086035}
   roundText: {fileID: 1873826135}
   canPlay: 0
@@ -30748,7 +30749,7 @@ GameObject:
   - component: {fileID: 1236690814}
   m_Layer: 5
   m_Name: Play Again?
-  m_TagString: Untagged
+  m_TagString: PlayAgainButton
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
